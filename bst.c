@@ -7,9 +7,8 @@
 
 struct bst_t {
 	node_t*	root;
-	size_t	size;					/* Number of nodes */
-	size_t	elem_size;				/* Size of a node */
-	int	(*cmp)(const void*, const void*);	/* Compare function */
+	size_t	size;
+	int	(*cmp)(const void*, const void*);
 };
 
 struct node_t {
@@ -19,44 +18,12 @@ struct node_t {
 };
 
 static node_t*	node_new (void* data);
-static void	node_free (node_t* node);
+static void	node_free (node_t*, void (*data_free)(void*));
 
-static void	bst_free_recursive (bst_t* bst, node_t* node);
-static bool	bst_add_recursive (bst_t* bst, node_t* node, void* data);
-static void	bst_print_inorder_recursive (bst_t*	bst,
-					     node_t*	node,
-					     void	(*print)(void* data));
-static size_t	bst_height_recursive (bst_t* bst, node_t* node);
-
-int cmp_int(const void* a, const void* b)
-{
-	return *((int*) a) - *((int*) b);
-}
-
-
-
-/*==============================================================================
-	NODE
-==============================================================================*/
-
-static node_t* node_new(void* data)
-{
-	node_t*	node = malloc(sizeof *node);
-	
-	node->data	= data;
-	node->left	= NULL;
-	node->right	= NULL;
-
-	return node;
-}
-
-static void node_free(node_t* node)
-{
-	if (node != NULL) {
-		printf("<%d> ", *((int*)node->data));
-		free(node);
-	}
-}
+static void	bst_free_recursive (bst_t*, node_t*, void (*data_free)(void*));
+static bool	bst_add_recursive (bst_t*, node_t*, void* data);
+static size_t	bst_height_recursive (bst_t*, node_t*);
+static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
 
 
 
@@ -70,32 +37,28 @@ bst_t* bst_new(int (*cmp)(const void*, const void*))
 
 	bst->root	= NULL;
 	bst->size	= 0;
-	bst->elem_size	= 0;
 	bst->cmp	= cmp;
 
 	return bst;
 }
 
-// TODO:
-// 	Perhaps this function should take a function pointer to a node_free
-// 	function.
-void bst_free(bst_t* bst)
+void bst_free(bst_t* bst, void (*data_free)(void*))
 {
-	printf("Freeing: ");
-	bst_free_recursive(bst, bst->root);
-	printf("... done.\n");
+	printf("Freeing:\n");
+	bst_free_recursive(bst, bst->root, data_free);
+	printf("\n... done.\n\n");
 	free(bst);
 }
 
-static void bst_free_recursive(bst_t* bst, node_t* node)
+static void bst_free_recursive(	bst_t*	bst,
+				node_t*	node,
+				void	(*data_free)(void*))
 {
 	if (node == NULL)
 		return;
-
-	bst_free_recursive(bst, node->left);
-	bst_free_recursive(bst, node->right);
-
-	node_free(node);
+	bst_free_recursive(bst, node->left, data_free);
+	bst_free_recursive(bst, node->right, data_free);
+	node_free(node, data_free);
 }
 
 
@@ -156,20 +119,124 @@ static size_t bst_height_recursive(bst_t* bst, node_t* node)
 	}
 }
 
-void bst_print_inorder(bst_t* bst, void (*print)(void* data))
+static void
+bst_execute_preorder_recursive  (bst_t*, node_t*, void (*execute)(void*));
+
+static void
+bst_execute_inorder_recursive   (bst_t*, node_t*, void (*execute)(void*));
+
+static void
+bst_execute_postorder_recursive (bst_t*, node_t*, void (*execute)(void*));
+
+#define BST_EXECUTE(ORDER) bst_execute_ ## ORDER ## _recursive
+
+void bst_execute(bst_t*			bst,
+		 void			(*execute)(void* data),
+		 traversal_order_t	order)
 {
-	bst_print_inorder_recursive(bst, bst->root, print);
-	printf("\n");
+	switch (order) {
+	case ORDER_PRE:	 BST_EXECUTE(preorder)	(bst, bst->root, execute);break;
+	case ORDER_IN:	 BST_EXECUTE(inorder)	(bst, bst->root, execute);break;
+	case ORDER_POST: BST_EXECUTE(postorder)	(bst, bst->root, execute);break;
+	}
 }
 
-static void bst_print_inorder_recursive(bst_t*	bst,
-					node_t*	node,
-					void	(*print)(void* data))
+static void
+bst_execute_preorder_recursive(	bst_t*	bst,
+				node_t* node,
+				void	(*execute)(void*))
 {
 	if (node == NULL)
 		return;
-	bst_print_inorder_recursive(bst, node->left, print);
-	print(node->data);
-	bst_print_inorder_recursive(bst, node->right, print);
+	execute(node->data);
+	bst_execute_preorder_recursive(bst, node->left, execute);
+	bst_execute_preorder_recursive(bst, node->right, execute);
 }
+
+static void
+bst_execute_inorder_recursive(	bst_t*	bst,
+				node_t*	node,
+				void	(*execute)(void*))
+{
+	if (node == NULL)
+		return;
+	bst_execute_preorder_recursive(bst, node->left, execute);
+	execute(node->data);
+	bst_execute_preorder_recursive(bst, node->right, execute);
+}
+
+static void
+bst_execute_postorder_recursive(bst_t*	bst,
+				node_t*	node,
+				void	(*execute)(void*))
+{
+	if (node == NULL)
+		return;
+	bst_execute_preorder_recursive(bst, node->left, execute);
+	bst_execute_preorder_recursive(bst, node->right, execute);
+	execute(node->data);
+}
+
+void bst_print(bst_t* bst, void (*print)(void* data))
+{
+	printf("Printing the BST:\n--------------------\n");
+	bst_print_recursive(bst, bst->root, print, 0);
+	printf("\n--------------------\n\n");
+}
+
+static void
+bst_print_recursive(bst_t*	bst,
+		    node_t*	node,
+		    void	(*print)(void* data),
+		    int		level)
+{
+	for (int i = 0; i < level; ++i) {
+		printf("%s", i == 0 ? "|——" : "———");
+	}
+	if (node == NULL) {
+		printf("( )\n");
+		return;
+	}
+
+	printf("(");
+	print(node->data);
+	printf(")\n");
+	bst_print_recursive(bst, node->left, print, level + 1);
+	bst_print_recursive(bst, node->right, print, level + 1);
+}
+
+
+
+/*==============================================================================
+	NODE
+==============================================================================*/
+
+static node_t* node_new(void* data)
+{
+	node_t*	node = malloc(sizeof *node);
+	
+	node->data	= data;
+	node->left	= NULL;
+	node->right	= NULL;
+
+	return node;
+}
+
+void node_free(node_t* node, void (*data_free)(void*))
+{
+	if (node != NULL) {
+		printf(" ");
+		data_free(node->data);
+		free(node);
+	}
+}
+
+
+
+#if 0
+static inline const void* greater(bst_t* bst, const void* a, const void* b)
+{
+	return bst->cmp(a, b) > 0 ? a : b;
+}
+#endif
 

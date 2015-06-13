@@ -1,5 +1,7 @@
 CC	= gcc
 CFLAGS	= -g -std=c99 -Wall -Wextra -pedantic
+CFLAGS	+= -fprofile-arcs -ftest-coverage	# For `gcov`
+SRC	= bst.c main.c
 OBJS	= bst.o main.o
 OUT	= out
 
@@ -9,5 +11,12 @@ all: $(OBJS)
 run:
 	./$(OUT)
 
+cov:
+	gcov -b $(SRC)
+	mkdir -p gcov
+	mv *.gcov gcov
+
 clean:
-	rm -f $(OBJS) $(OUT)
+	rm -f $(OBJS) $(OUT) *.gcda *.gcno
+	rm -rf $(OUT).dSYM
+

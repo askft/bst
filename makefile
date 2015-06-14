@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -g -std=c99 -Wall -Wextra -pedantic
+CFLAGS	= -g -std=c99 -Wall -Wextra -pedantic -O3
 CFLAGS	+= -fprofile-arcs -ftest-coverage	# For `gcov`
 SRC	= bst.c main.c
 OBJS	= bst.o main.o

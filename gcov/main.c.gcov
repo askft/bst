@@ -1,114 +1,222 @@
         -:    0:Source:main.c
         -:    0:Graph:main.gcno
         -:    0:Data:main.gcda
-        -:    0:Runs:1
+        -:    0:Runs:4
         -:    0:Programs:1
         -:    1:#include "bst.h"
         -:    2:#include <stdio.h>
         -:    3:#include <string.h>
         -:    4:
-        -:    5:/* Add person to the BST, print them and then free the nodes */
-        -:    6:
-        -:    7:typedef struct {
-        -:    8:	char	name[128];
-        -:    9:	int	age;
-        -:   10:} person_t;
-        -:   11:
-function person_new called 0 returned 0% blocks executed 0%
-    #####:   12:person_t* person_new(const char* name, int age)
-        -:   13:{
-    #####:   14:	person_t* p = malloc(sizeof(*p));
-    #####:   15:	strcpy(p->name, name);
-    #####:   16:	p->age = age;
-    #####:   17:	return p;
-        -:   18:}
-        -:   19:
-function person_print called 0 returned 0% blocks executed 0%
-    #####:   20:void person_print(void* person)
-        -:   21:{
-    #####:   22:	person_t* p = (person_t*) person;
-        -:   23:
-    #####:   24:	printf("{ name = \"%s\", age = %d }", p->name, p->age);
-    #####:   25:}
-        -:   26:
-function person_free called 0 returned 0% blocks executed 0%
-    #####:   27:void person_free(void* data)
-        -:   28:{
-    #####:   29:	person_t* p = (person_t*) data;
-    #####:   30:	person_print(p);
-    #####:   31:	free(p);
-    #####:   32:}
-        -:   33:
-        -:   34:/* If two persons have the same name and age, they are considered to be the
-        -:   35: * same person. */
-function person_cmp called 0 returned 0% blocks executed 0%
-    #####:   36:int person_cmp(const void* a, const void* b)
-        -:   37:{
-    #####:   38:	person_t*	pa		= (person_t*) a;
-    #####:   39:	person_t*	pb		= (person_t*) b;
-    #####:   40:	int		res_name	= strcmp(pa->name, pb->name);
-        -:   41:
-    #####:   42:	if (res_name == 0)
-branch  0 never executed
-branch  1 never executed
-    #####:   43:		return pa->age - pb->age;
-        -:   44:	else
-    #####:   45:		return res_name;
-    #####:   46:}
+        -:    5:typedef struct {
+        -:    6:	char	name[128];
+        -:    7:	int	age;
+        -:    8:} person_t ;
+        -:    9:
+        -:   10:
+        -:   11:void test_person(void);
+        -:   12:void test_int	(void);
+        -:   13:
+        -:   14:person_t 	person_create	(const char* name, int age);
+        -:   15:void		person_free	(void* data);
+        -:   16:int		person_cmp	(const void* a, const void* b);
+        -:   17:void		person_print	(void* data);
+        -:   18:
+        -:   19:void		int_free	(void* data);
+        -:   20:int		int_cmp		(const void* a, const void* b);
+        -:   21:void		int_print	(void* data);
+        -:   22:
+function main called 4 returned 100% blocks executed 100%
+        -:   23:int main(void)
+        -:   24:{
+        4:   25:	test_person	();
+        4:   26:	test_int	();
+        4:   27:}
+        -:   28:
+        -:   29:
+function test_person called 4 returned 100% blocks executed 100%
+        -:   30:void test_person()
+        -:   31:{
+        4:   32:	printf( "----------------------------------------\n"
+        -:   33:		" test_person\n"
+        -:   34:		"----------------------------------------\n\n" );
+        -:   35:
+        4:   36:	bst_t* bst	= bst_new(sizeof(person_t), person_cmp,
+        -:   37:				  person_free, person_print);
+        4:   38:	bst_t* tmp	= bst;
+        -:   39:
+        4:   40:	person_t persons[] = {
+        4:   41:		person_create("Alexander", 20),
+        4:   42:		person_create("Donald Knuth", 25),
+        4:   43:		person_create("Johnny Bravo", 16),
+        4:   44:		person_create("Knugen", 37),
+        4:   45:		person_create("N.C. Overguard", 37),
+        -:   46:	};
         -:   47:
-        -:   48:#if 0
-        -:   49:int main(void)
-        -:   50:{
-        -:   51:	bst_t* bst	= bst_new(person_cmp);
-        -:   52:
-        -:   53:	bst_add		(bst, person_new("Alexander", 20));
-        -:   54:	bst_add		(bst, person_new("Alexander", 20));
-        -:   55:	bst_add		(bst, person_new("Alexander", 25));
-        -:   56:	bst_add		(bst, person_new("Johnny Bravo", 16));
-        -:   57:	bst_add		(bst, person_new("Knugen", 37));
-        -:   58:	bst_add		(bst, person_new("N.C. Overguard", 37));
-        -:   59://	bst_execute	(bst, person_print, ORDER_PRE);
-        -:   60:	bst_print	(bst, person_print);
-        -:   61:	bst_free	(bst, person_free);
-        -:   62:}
-        -:   63:#endif
+        4:   48:	int n = sizeof(persons) / sizeof(persons[0]);
+        -:   49:
+       48:   50:	for (int i = 0; i < n; ++i) {
+branch  0 taken 83%
+branch  1 taken 17%
+       20:   51:		bst_add(bst, &persons[i]);
+        -:   52:	}
+        -:   53:
+        4:   54:	bst_print(bst, person_print);
+        -:   55:
+        4:   56:	bst = bst_balanced(tmp);
+        -:   57:
+        4:   58:	bst_free	(tmp);
+        4:   59:	bst_print	(bst, person_print);
+        4:   60:	bst_free	(bst);
+        -:   61:
+        4:   62:	printf("\n\n");
+        4:   63:}
         -:   64:
-        -:   65:
-        -:   66:
-function int_cmp called 20 returned 100% blocks executed 100%
-       20:   67:int int_cmp(const void* a, const void* b)
-        -:   68:{
-       20:   69:	return *((int*)a) - *((int*)b);
-        -:   70:}
-        -:   71:
-function int_print called 10 returned 100% blocks executed 100%
-       10:   72:void int_print(void* data)
-        -:   73:{
-       10:   74:	printf("%d", *((int*)data));
-       10:   75:}
-        -:   76:
-function int_free called 10 returned 100% blocks executed 100%
-       10:   77:void int_free(void* data)
-        -:   78:{
-       10:   79:	printf("(%d)", *((int*)data));
-       10:   80:}
-        -:   81:
-function main called 1 returned 100% blocks executed 100%
-        -:   82:int main()
-        -:   83:{
-        1:   84:	bst_t*	bst;
-        1:   85:	int	arr[] = { 5, 2, 3, 9, 6, 7, 1, 8, 4, 10 };
-        -:   86:
-        1:   87:	bst = bst_new(int_cmp);
-       22:   88:	for (int i = 0; i < 10; ++i) {
+function test_int called 4 returned 100% blocks executed 100%
+        -:   65:void test_int()
+        -:   66:{
+        4:   67:	printf( "----------------------------------------\n"
+        -:   68:		" test_int\n"
+        -:   69:		"----------------------------------------\n\n" );
+        -:   70:	bst_t*	bst;
+        4:   71:	int	arr[] = { 5, 2, 3, 9, 6, 7, 1, 8, 4, 10 };
+        -:   72:
+        4:   73:	bst = bst_new(sizeof(int), int_cmp, int_free, int_print);
+        -:   74:
+       88:   75:	for (int i = 0; i < 10; ++i) {
 branch  0 taken 91%
 branch  1 taken 9%
-       10:   89:		bst_add(bst, &arr[i]);
-       10:   90:	}
-        -:   91:
-        1:   92:	bst_print(bst, int_print);
-        1:   93:	printf("height = %zu\n", bst_height(bst));
-        -:   94:
-        1:   95:	bst_free(bst, int_free);
-        1:   96:}
+       40:   76:		arr[i] = i + 1;
+       40:   77:		bst_add(bst, &arr[i]);
+        -:   78:	}
+        -:   79:
+        4:   80:	bst_print	(bst, int_print);
+        4:   81:	printf	("\nBalancing the tree...\n");
+        4:   82:	bst_t* tmp = bst;
+        4:   83:	bst = bst_balanced(tmp);
+        4:   84:	bst_free(tmp);
+        4:   85:	printf	("Balanced the tree!\n\n");
+        4:   86:	bst_print	(bst, int_print);
+        -:   87:
+        4:   88:	bst_free	(bst);
+        -:   89:
+        4:   90:	printf("\n\n");
+        4:   91:}
+        -:   92:
+        -:   93:
+        -:   94:/*==============================================================================
+        -:   95:	PERSON
+        -:   96:==============================================================================*/
         -:   97:
+function person_create called 20 returned 100% blocks executed 100%
+       20:   98:person_t person_create(const char* name, const int age)
+        -:   99:{
+       20:  100:	person_t person;
+       20:  101:	strcpy(person.name, name);
+       20:  102:	person.age = age;
+       20:  103:	return person;
+       20:  104:}
+        -:  105:
+function person_print called 60 returned 100% blocks executed 100%
+       60:  106:void person_print(void* person)
+        -:  107:{
+       60:  108:	person_t* p = (person_t*) person;
+        -:  109:
+       60:  110:	printf("{ name = \"%s\", age = %d }", p->name, p->age);
+       60:  111:}
+        -:  112:
+        -:  113:/* TODO(Alexander): Make it more clear how stuff should be freed. In this
+        -:  114: * example, the data sent to the BST is stack-allocated and thus need not
+        -:  115: * be freed.
+        -:  116: */
+function person_free called 40 returned 100% blocks executed 100%
+       40:  117:void person_free(void* data)
+        -:  118:{
+        -:  119://	person_t* p = (person_t*) data;
+        -:  120://	printf("  Freeing  ");
+        -:  121://	person_print(p);
+        -:  122://	printf("\n");
+        -:  123://	free(p);
+       40:  124:}
+        -:  125:
+        -:  126:/* If two persons have the same name and age, they are considered to be the
+        -:  127: * same person. */
+function person_cmp called 40 returned 100% blocks executed 80%
+       40:  128:int person_cmp(const void* a, const void* b)
+        -:  129:{
+       40:  130:	person_t*	pa		= (person_t*) a;
+       40:  131:	person_t*	pb		= (person_t*) b;
+       40:  132:	int		res_name	= strcmp(pa->name, pb->name);
+        -:  133:
+       40:  134:	if (res_name == 0)
+branch  0 taken 0%
+branch  1 taken 100%
+    #####:  135:		return pa->age - pb->age;
+        -:  136:	else
+       40:  137:		return res_name;
+       40:  138:}
+        -:  139:
+        -:  140:
+        -:  141:
+        -:  142:/*==============================================================================
+        -:  143:	INT
+        -:  144:==============================================================================*/
+        -:  145:
+        -:  146:
+function int_cmp called 180 returned 100% blocks executed 100%
+      180:  147:int int_cmp(const void* a, const void* b)
+        -:  148:{
+      180:  149:	return *((int*)a) - *((int*)b);
+        -:  150:}
+        -:  151:
+function int_print called 120 returned 100% blocks executed 80%
+      120:  152:void int_print(void* data)
+        -:  153:{
+      120:  154:	if (data == NULL) {
+branch  0 taken 0%
+branch  1 taken 100%
+    #####:  155:		printf("int_print: Invalid data.\n");
+    #####:  156:		return;
+        -:  157:	}
+      120:  158:	printf("%d", *((int*)data));
+      240:  159:}
+        -:  160:
+function int_free called 80 returned 100% blocks executed 100%
+       80:  161:void int_free(void* data)
+        -:  162:{
+       80:  163:}
+        -:  164:
+        -:  165:
+        -:  166:
+        -:  167:
+        -:  168:
+        -:  169:#if 0
+        -:  170:person_t* person_new(const char* name, int age)
+        -:  171:{
+        -:  172:	person_t* p = malloc(sizeof(*p));
+        -:  173:	strcpy(p->name, name);
+        -:  174:	p->age = age;
+        -:  175:	return p;
+        -:  176:}
+        -:  177:
+        -:  178:	bst_add		(bst, person_new("Alexander", 20));
+        -:  179:	bst_add		(bst, person_new("Donald Knuth", 25));
+        -:  180:	bst_add		(bst, person_new("Johnny Bravo", 16));
+        -:  181:	bst_add		(bst, person_new("Knugen", 37));
+        -:  182:	bst_add		(bst, person_new("N.C. Overguard", 37));
+        -:  183:
+        -:  184:	bst_print	(bst, person_print);
+        -:  185:
+        -:  186:	printf("\nBalancing the tree...\n");
+        -:  187:
+        -:  188:	bst_t* tmp;
+        -:  189:	tmp		= bst;
+        -:  190:	bst		= bst_balanced(tmp);
+        -:  191:	bst_free	(tmp);
+        -:  192:
+        -:  193:	printf("Balanced the tree!\n\n");
+        -:  194:
+        -:  195:	bst_print	(bst, person_print);
+        -:  196:
+        -:  197:	bst_free	(bst);
+        -:  198:
+        -:  199:#endif

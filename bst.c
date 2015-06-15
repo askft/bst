@@ -5,17 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO
-// 	Look for all the TODOs in this file.
-//
+// TODO: Check heap allocations for NULL returns and handle it properly.
 
 struct bst_t {
-	node_t*	root;
-	size_t	size;
-	size_t	elem_size;
-	int	(*cmp)(const void*, const void*);
-	void	(*data_free)(void*);
-	void	(*print)(void*);
+	node_t*		root;
+	size_t		size;
+	size_t		elem_size;
+	data_handling_t	data_handling;
+	int		(*cmp)(const void*, const void*);
+	void		(*data_free)(void*);
+	void		(*print)(void*);
 };
 
 struct node_t {
@@ -24,15 +23,14 @@ struct node_t {
 	node_t*	right;
 };
 
-static node_t*	node_new (void* data);
+static node_t*	node_new (bst_t*, void* data);
 static void	node_free (node_t*, void (*data_free)(void*));
-
 
 static void	bst_free_recursive (bst_t*, node_t*);
 static bool	bst_add_recursive (bst_t*, node_t*, void* data);
 static size_t	bst_height_recursive (bst_t*, node_t*);
 static int	bst_to_array (bst_t* bst, node_t* node, void* arr[], int index);
-static node_t*	bst_build_tree (void* arr[], int first, int last);
+static node_t*	bst_build_tree (bst_t*, void* arr[], int first, int last);
 static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
 
 
@@ -40,35 +38,36 @@ static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
 	BINARY SEARCH TREE
 ==============================================================================*/
 
-bst_t* bst_new(	size_t	elem_size,
+bst_t* bst_new(	data_handling_t	data_handling,
+		size_t	elem_size,
 		int	(*cmp)(const void*, const void*),
 		void	(*data_free)(void*),
 		void	(*print)(void*))
 {
 	bst_t* bst = malloc(sizeof *bst);
 
-	bst->root	= NULL;
-	bst->size	= 0;
-	bst->elem_size	= elem_size;
-	bst->cmp	= cmp;
-	bst->data_free	= data_free;
-	bst->print	= print;
+	bst->root		= NULL;
+	bst->size		= 0;
+	bst->elem_size		= elem_size;
+	bst->data_handling	= data_handling;
+	bst->cmp		= cmp;
+	bst->data_free		= data_free;
+	bst->print		= print;
 
 	return bst;
 }
 
 void bst_free(bst_t* bst)
 {
-	printf("\nFreeing ...\n");
 	bst_free_recursive(bst, bst->root);
-	printf("Done!\n");
 	free(bst);
 }
 
 static void bst_free_recursive(bst_t* bst, node_t* node)
 {
-	if (node == NULL)
+	if (node == NULL) {
 		return;
+	}
 	bst_free_recursive(bst, node->left);
 	bst_free_recursive(bst, node->right);
 	node_free(node, bst->data_free);
@@ -77,7 +76,7 @@ static void bst_free_recursive(bst_t* bst, node_t* node)
 bool bst_add(bst_t* bst, void* data)
 {
 	if (bst->root == NULL) {
-		bst->root = node_new(data);
+		bst->root = node_new(bst, data);
 		bst->size += 1;
 		return true;
 	}
@@ -92,7 +91,7 @@ static bool bst_add_recursive(bst_t* bst, node_t* node, void* data)
 		return false;
 	} else if (cmp_result < 0) {
 		if (node->left == NULL) {
-			node->left = node_new(data);
+			node->left = node_new(bst, data);
 			bst->size += 1;
 			return true;
 		} else {
@@ -100,7 +99,7 @@ static bool bst_add_recursive(bst_t* bst, node_t* node, void* data)
 		}
 	} else {
 		if (node->right == NULL) {
-			node->right = node_new(data);
+			node->right = node_new(bst, data);
 			bst->size += 1;
 			return true;
 		} else {
@@ -161,8 +160,9 @@ bst_execute_preorder_recursive(	bst_t*	bst,
 				node_t* node,
 				void	(*execute)(void*))
 {
-	if (node == NULL)
+	if (node == NULL) {
 		return;
+	}
 	execute(node->data);
 	bst_execute_preorder_recursive(bst, node->left, execute);
 	bst_execute_preorder_recursive(bst, node->right, execute);
@@ -173,8 +173,9 @@ bst_execute_inorder_recursive(	bst_t*	bst,
 				node_t*	node,
 				void	(*execute)(void*))
 {
-	if (node == NULL)
+	if (node == NULL) {
 		return;
+	}
 	bst_execute_preorder_recursive(bst, node->left, execute);
 	execute(node->data);
 	bst_execute_preorder_recursive(bst, node->right, execute);
@@ -185,8 +186,9 @@ bst_execute_postorder_recursive(bst_t*	bst,
 				node_t*	node,
 				void	(*execute)(void*))
 {
-	if (node == NULL)
+	if (node == NULL) {
 		return;
+	}
 	bst_execute_preorder_recursive(bst, node->left, execute);
 	bst_execute_preorder_recursive(bst, node->right, execute);
 	execute(node->data);
@@ -198,24 +200,26 @@ bst_t* bst_balanced(bst_t* bst)
 		printf("Nothing to balance.\n");
 		return NULL;
 	}
+
 	void*	arr[bst->size];
 	int	last_index;
-	bst_t*	new;
+	bst_t*	new_bst;
 
 	last_index	= bst_to_array(bst, bst->root, arr, 0) - 1;
 
-	new		= bst_new(bst->elem_size, bst->cmp,
-				  bst->data_free, bst->print);
-	new->root	= bst_build_tree(arr, 0, last_index);
-	new->size	= bst->size;
-	new->cmp	= bst->cmp;
-	new->data_free	= bst->data_free;
-	new->print	= bst->print;
-	// TODO: use memcpy instead for a (very) slight speedup (?)
+	new_bst		= bst_new(bst->data_handling,
+				  bst->elem_size,
+				  bst->cmp,
+				  bst->data_free,
+				  bst->print);
 
-//	bst_print(bst, bst->print);
+	new_bst->root		= bst_build_tree(bst, arr, 0, last_index);
+	new_bst->size		= bst->size;
+	new_bst->cmp		= bst->cmp;
+	new_bst->data_free	= bst->data_free;
+	new_bst->print		= bst->print;
 
-	return new;
+	return new_bst;
 }
 
 static int
@@ -229,12 +233,11 @@ bst_to_array(	bst_t*	bst,
 	}
 	index	   = bst_to_array(bst, node->left, arr, index);
 	arr[index] = node->data;
-//	memcpy(arr[index], node->data, bst->elem_size);
 	index	   = bst_to_array(bst, node->right, arr, index + 1);
 	return index;
 }
 
-static node_t* bst_build_tree(void* arr[], int first, int last)
+static node_t* bst_build_tree(bst_t* bst, void* arr[], int first, int last)
 {
 	if (first > last) {
 		return NULL;
@@ -242,24 +245,9 @@ static node_t* bst_build_tree(void* arr[], int first, int last)
 	int		mid;
 	node_t*		mid_node;
 	mid		= (first + last) / 2;
-
-	//
-	// TODO:
-	// 	If a new tree is built and the old one is freed afterward, the
-	// 	data in the new tree will also be freed because as it currently
-	// 	is, node_new(...) will point the data in the new tree to the
-	// 	data in arr[...], which in its turn points to the data in the
-	// 	old tree. ___`arr` is just an array of pointers!___
-	//
-	// 	To counter this issue, some kind of flag or indicator should
-	// 	be passed when creating the tree that tells the program
-	// 	if the data need to be freed or not.
-	//
-	// 	See the todo inside the `node_new` function.
-	//
-	mid_node	= node_new(arr[mid]);
-	mid_node->left	= bst_build_tree(arr, first, mid - 1);
-	mid_node->right	= bst_build_tree(arr, mid + 1, last);
+	mid_node	= node_new(bst, arr[mid]);
+	mid_node->left	= bst_build_tree(bst, arr, first, mid - 1);
+	mid_node->right	= bst_build_tree(bst, arr, mid + 1, last);
 	return mid_node;
 }
 
@@ -284,7 +272,11 @@ bst_print_recursive(bst_t*	bst,
 		return;
 	}
 	printf("(");
-	print(node->data);
+	if (print != NULL) {
+		print(node->data);
+	} else {
+		printf("<No print function supplied.>");
+	}
 	printf(")\n");
 	bst_print_recursive(bst, node->left, print, level + 1);
 	bst_print_recursive(bst, node->right, print, level + 1);
@@ -296,28 +288,29 @@ bst_print_recursive(bst_t*	bst,
 	NODE
 ==============================================================================*/
 
-static node_t* node_new(void* data)
+static node_t* node_new(bst_t* bst, void* data)
 {
 	node_t*	node = malloc(sizeof *node);
 
-	//
-	// TODO
-	// 	See the todo inside the `bst_build_tree` function. If the user
-	// 	asks the BST to manage the memory (this request should only be
-	// 	present if the user passes pointers to blocks of heap-allocated
-	// 	memory), then the assignment
-	//
-	// 		node->data = data
-	//
-	// 	should be changed to something like
-	//
-	// 		memcpy(node->data, data, elem_size)
-	//
-	// 	(pass `elem_size` to `node_new`). This makes freeing the old
-	// 	BST safe by avoiding freeing memory that was already freed.
-	//
+	switch (bst->data_handling) {
+
+	/* The BST makes a private copy of the data. */
+	case BST_COPY:
+		node->data = malloc(bst->elem_size);
+		memcpy(node->data, data, bst->elem_size);
+		break;
+
 	/* The BST does not take ownership of the data. */
-	node->data	= data;
+	case BST_POINT:
+		node->data = data;
+		break;
+
+	default:
+		printf("Invalind data_handling argument.\n");
+		exit(1);
+		break;
+	}
+
 	node->left	= NULL;
 	node->right	= NULL;
 
@@ -327,7 +320,9 @@ static node_t* node_new(void* data)
 void node_free(node_t* node, void (*data_free)(void*))
 {
 	if (node != NULL) {
-		data_free(node->data);
+		if (data_free != NULL) {
+			data_free(node->data);
+		}
 		free(node);
 	}
 }

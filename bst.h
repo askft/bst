@@ -4,13 +4,69 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+	//
+	// TODO:
+	// 	If a new tree is built and the old one is freed afterward, the
+	// 	data in the new tree will also be freed because as it currently
+	// 	is, node_new(...) will point the data in the new tree to the
+	// 	data in arr[...], which in its turn points to the data in the
+	// 	old tree. ___`arr` is just an array of pointers!___
+	//
+	// 	To counter this issue, some kind of flag or indicator should
+	// 	be passed when creating the tree that tells the program
+	// 	if the data need to be freed or not.
+	//
+	// 	See the todo inside the `node_new` function.
+	//
 
 typedef struct bst_t bst_t;
 typedef struct node_t node_t;
 
+/*==============================================================================
+ * This enum decides, when passed as an argument to `bst_new`, how data will be
+ * handled. Please read the documentation for `bst_new` for a detailed
+ * description of the intended usage of this enum.
+ */
+typedef enum { BST_COPY, BST_POINT, } data_handling_t;
+
 
 /*==============================================================================
  * Create a new BST (Binary Search Tree).
+ *
+ * @arg `data_handling`
+ * 	An enum dictating how the BST will handle the data that is passed to
+ * 	it when adding nodes.
+ *
+ * 		- BST_COPY:
+ * 			The BST will allocate new memory on the heap for the
+ * 			data. This data does not have to be explicitly freed by
+ * 			the caller; HOWEVER, he or she has to write a custom
+ * 			free-function passed to this functions as the
+ * 			`data_free` argument. For simple stack-allocated data
+ * 			it would just something like:
+ *
+ * 				void free_stuff(void* data)
+ * 				{
+ * 					free(data);
+ * 				}
+ *
+ * 			Using BST_COPY implicitly results in the BST being able
+ * 			to have a lifetime of desired length, since the data in
+ * 			the nodes is not lost when the original data that was
+ * 			passed as arguments to the `bst_add` function goes out
+ * 			of scope.
+ *
+ * 		- BST_POINT:
+ * 			The BST will only point the data part of each node to
+ * 			the data passed to the `bst_add` function. The function
+ * 			pointer to free memory, mentioned above, may be replaced
+ * 			by NULL as the argument. Using BST_POINT will implicitly
+ * 			result in the BST having a shorter or equally long
+ * 			lifetime as the data it holds.
+ *
+ * 	When passing heap-allocated data (which the called is responsible for
+ * 	freeing) to `bst_new`, you should always use BST_COPY. When passing
+ * 	stack-allocated (automatically deallocated) data, it does not matter.
  *
  * @arg `elem_size`
  * 	The size of the elements that will be stored inside the BST. If for
@@ -19,7 +75,7 @@ typedef struct node_t node_t;
  *
  * @arg	`cmp`
  * 	A pointer to a function that compares two instances of data of the same
- * 	type, and returns:
+ * 	type, and returns an integer which is
  * 		== 0,	if the arguments are equal
  * 		 > 0,	if the first argument is greater than the second
  * 		 < 0,	if the first argument is smaller than the second
@@ -27,17 +83,23 @@ typedef struct node_t node_t;
  * @arg `data_free`
  * 	A pointer to a function that frees data of the type contained in the
  * 	node (i.e. the type of which pointers to are added as the `data`
- * 	argument of bst_add).
+ * 	argument of bst_add). Pass `NULL` if you do not want the tree to
+ * 	free any data. Keep in mind though that if BST_COPY is passed as
+ * 	`data_handling`, passing `NULL` as `data_free` will result in a memory
+ * 	leak.
  *
  * @arg `print`
  * 	A pointer to a function that prints the data contained in a BST node.
+ * 	Passing `NULL` will print a short message saying that there is no print
+ * 	function available.
  *
  * @return
  * 	A pointer to a bst_t struct. The caller need not know anything about
  * 	this struct; it is just handle that should be passed to the remaining
  * 	bst_? functions.
  */
-bst_t*	bst_new		(size_t	elem_size,
+bst_t*	bst_new		(data_handling_t data_handling,
+			 size_t	elem_size,
 			 int	(*cmp)(const void*, const void*),
 			 void	(*data_free)(void*),
 			 void	(*print)(void*));
@@ -47,25 +109,25 @@ bst_t*	bst_new		(size_t	elem_size,
  * Deallocate memory used by the BST.
  *
  * Free all the nodes in the BST pointed to by `bst`, and thereafter free
- * `bst` itself. The data contained in the nodes is not freed; the *caller*
- * thus has responsibility for the lifetime of the data of the BST.
+ * `bst` itself.
+ *
+ * The data contained in the nodes is freed with the `data_free` function passed
+ * to the BST when it is created. If this function is `NULL`, the data inside
+ * the nodes will not be freed.
  */
 void	bst_free	(bst_t* bst);
 
 
 /*==============================================================================
- * Add a pointer to some type of data to the BST. The data is not copied nor is
- * new memory allocated for it. In this stage of implementation, passing heap-
- * allocated objects to this function is _not_ safe. See main.c for examples
- * of how to use the BST.
- * TODO(Alexander):
- * 	This _will_ be changed in a near future. See TODOs inside bst.c.
+ * Add a pointer to some type of data to the BST. If BST_COPY was used when
+ * creating the BST, new memory will be allocated. If BST_POINT was used, then
+ * the data pointer inside each node will only be pointed to the data passed
+ * to this function.
  *
- * First, the function checks whether or not `data` is contained in the BST.
+ * * First, the function checks whether or not `data` is contained in the BST.
  * This test is done by the compare function passed to the BST as it was created
  * (with bst_new). If `data` already exists in the BST, nothing happens.
- * Otherwise a new node is created in `bst` and its data field is pointer to
- * `data`.
+ * Otherwise a new node is created in `bst`.
  *
  * Directly passing a pointer to block of memory to `data` without keeping a
  * reference to it may cause a memory leak if the same data is added twice.
@@ -105,13 +167,16 @@ void	bst_execute	(bst_t*			bst,
  *
  * @return
  * 	A pointer to a new BST. The old BST has to be freed by the caller by
- * 	calling the `bst_free` function declared in this file.
+ * 	calling the `bst_free` function declared in this file (if the caller
+ * 	so wishes).
  */
 bst_t*	bst_balanced	(bst_t* bst);
 
 
 /*==============================================================================
- * Print a representation of the BST to `stdout`.
+ * Print a representation of the BST to `stdout`. The `print` function pointer
+ * is the same used when creating the tree.
+ * TODO: Remove this inconvenience!
  */
 void	bst_print	(bst_t* bst, void (*print)(void* data));
 

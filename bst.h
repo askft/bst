@@ -4,21 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-	//
-	// TODO:
-	// 	If a new tree is built and the old one is freed afterward, the
-	// 	data in the new tree will also be freed because as it currently
-	// 	is, node_new(...) will point the data in the new tree to the
-	// 	data in arr[...], which in its turn points to the data in the
-	// 	old tree. ___`arr` is just an array of pointers!___
-	//
-	// 	To counter this issue, some kind of flag or indicator should
-	// 	be passed when creating the tree that tells the program
-	// 	if the data need to be freed or not.
-	//
-	// 	See the todo inside the `node_new` function.
-	//
-
 typedef struct bst_t bst_t;
 typedef struct node_t node_t;
 

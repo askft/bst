@@ -242,13 +242,14 @@ static node_t* bst_build_tree(void* arr[], int first, int last)
 	int		mid;
 	node_t*		mid_node;
 	mid		= (first + last) / 2;
+
 	//
 	// TODO:
-	// 	If a new tree is build and the old one freed, the data
-	// 	in the new tree will also be freed because as it currently
-	// 	is, node_new(...) will point the data in the new tree to
-	// 	the data in arr[...], which in its turn points to the data
-	// 	in the old tree. ___`arr` is just an array of pointers!___
+	// 	If a new tree is built and the old one is freed afterward, the
+	// 	data in the new tree will also be freed because as it currently
+	// 	is, node_new(...) will point the data in the new tree to the
+	// 	data in arr[...], which in its turn points to the data in the
+	// 	old tree. ___`arr` is just an array of pointers!___
 	//
 	// 	To counter this issue, some kind of flag or indicator should
 	// 	be passed when creating the tree that tells the program
@@ -256,7 +257,6 @@ static node_t* bst_build_tree(void* arr[], int first, int last)
 	//
 	// 	See the todo inside the `node_new` function.
 	//
-
 	mid_node	= node_new(arr[mid]);
 	mid_node->left	= bst_build_tree(arr, first, mid - 1);
 	mid_node->right	= bst_build_tree(arr, mid + 1, last);

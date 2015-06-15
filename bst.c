@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO
+// 	Look for all the TODOs in this file.
+//
+
 struct bst_t {
 	node_t*	root;
 	size_t	size;
@@ -209,7 +213,7 @@ bst_t* bst_balanced(bst_t* bst)
 	new->print	= bst->print;
 	// TODO: use memcpy instead for a (very) slight speedup (?)
 
-	bst_print(bst, bst->print);
+//	bst_print(bst, bst->print);
 
 	return new;
 }
@@ -238,6 +242,21 @@ static node_t* bst_build_tree(void* arr[], int first, int last)
 	int		mid;
 	node_t*		mid_node;
 	mid		= (first + last) / 2;
+	//
+	// TODO:
+	// 	If a new tree is build and the old one freed, the data
+	// 	in the new tree will also be freed because as it currently
+	// 	is, node_new(...) will point the data in the new tree to
+	// 	the data in arr[...], which in its turn points to the data
+	// 	in the old tree. ___`arr` is just an array of pointers!___
+	//
+	// 	To counter this issue, some kind of flag or indicator should
+	// 	be passed when creating the tree that tells the program
+	// 	if the data need to be freed or not.
+	//
+	// 	See the todo inside the `node_new` function.
+	//
+
 	mid_node	= node_new(arr[mid]);
 	mid_node->left	= bst_build_tree(arr, first, mid - 1);
 	mid_node->right	= bst_build_tree(arr, mid + 1, last);
@@ -280,7 +299,23 @@ bst_print_recursive(bst_t*	bst,
 static node_t* node_new(void* data)
 {
 	node_t*	node = malloc(sizeof *node);
-	
+
+	//
+	// TODO
+	// 	See the todo inside the `bst_build_tree` function. If the user
+	// 	asks the BST to manage the memory (this request should only be
+	// 	present if the user passes pointers to blocks of heap-allocated
+	// 	memory), then the assignment
+	//
+	// 		node->data = data
+	//
+	// 	should be changed to something like
+	//
+	// 		memcpy(node->data, data, elem_size)
+	//
+	// 	(pass `elem_size` to `node_new`). This makes freeing the old
+	// 	BST safe by avoiding freeing memory that was already freed.
+	//
 	/* The BST does not take ownership of the data. */
 	node->data	= data;
 	node->left	= NULL;

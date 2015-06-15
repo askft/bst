@@ -55,7 +55,11 @@ void	bst_free	(bst_t* bst);
 
 /*==============================================================================
  * Add a pointer to some type of data to the BST. The data is not copied nor is
- * new memory allocated for it.
+ * new memory allocated for it. In this stage of implementation, passing heap-
+ * allocated objects to this function is _not_ safe. See main.c for examples
+ * of how to use the BST.
+ * TODO(Alexander):
+ * 	This _will_ be changed in a near future. See TODOs inside bst.c.
  *
  * First, the function checks whether or not `data` is contained in the BST.
  * This test is done by the compare function passed to the BST as it was created

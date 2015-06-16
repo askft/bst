@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: Check heap allocations for NULL returns and handle it properly.
+// TODO:
+// 	- Check heap allocations for `NULL` returns and handle it properly.
+// 	- Check all arguments for `NULL`.
+
 
 struct bst_t {
 	node_t*		root;
@@ -24,14 +27,22 @@ struct node_t {
 };
 
 static node_t*	node_new (bst_t*, void* data);
-static void	node_free (node_t*, void (*data_free)(void*));
+static void	node_free (bst_t*, node_t*);
 
-static void	bst_free_recursive (bst_t*, node_t*);
-static bool	bst_add_recursive (bst_t*, node_t*, void* data);
-static size_t	bst_height_recursive (bst_t*, node_t*);
-static int	bst_to_array (bst_t* bst, node_t* node, void* arr[], int index);
-static node_t*	bst_build_tree (bst_t*, void* arr[], int first, int last);
-static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
+static void	bst_free_recursive	(bst_t*, node_t*);
+static bool	bst_add_recursive	(bst_t*, node_t*, void* data);
+node_t*		bst_delete_recursive	(bst_t*, node_t*, void* data);
+static bool	bst_contains_recursive	(bst_t*, node_t*, void* data);
+static size_t	bst_height_recursive	(bst_t*, node_t*);
+
+static int	bst_to_array		(bst_t*, node_t*,
+					 void* arr[], int index);
+
+static node_t*	bst_build_tree		(bst_t*, void* arr[],
+					 int first, int last);
+
+static void	bst_print_recursive	(bst_t*, node_t*,
+					 void (*print)(void*), int);
 
 
 /*==============================================================================
@@ -70,7 +81,7 @@ static void bst_free_recursive(bst_t* bst, node_t* node)
 	}
 	bst_free_recursive(bst, node->left);
 	bst_free_recursive(bst, node->right);
-	node_free(node, bst->data_free);
+	node_free(bst, node);
 }
 
 bool bst_add(bst_t* bst, void* data)
@@ -106,6 +117,88 @@ static bool bst_add_recursive(bst_t* bst, node_t* node, void* data)
 			return bst_add_recursive(bst, node->right, data);
 		}
 	}
+}
+
+static node_t* smallest_subnode(node_t* node)
+{
+	node_t* current = node;
+	while (current->left != NULL) {
+		current = current->left;
+	}
+	return current;
+}
+
+node_t* bst_delete(bst_t* bst, void* data)
+{
+	return bst_delete_recursive(bst, bst->root, data);
+}
+
+node_t* bst_delete_recursive(bst_t* bst, node_t* node, void* data)
+{
+	if (node == NULL) {
+		return node;
+	}
+
+	int cmp_result = bst->cmp(data, node->data);
+
+	if (cmp_result == 0) {
+		if (node->left == NULL) {
+			node_t* tmp = node->right;
+			node_free(bst, node);
+			return tmp;
+		} else if (node->right == NULL) {
+			node_t* tmp = node->left;
+			node_free(bst, node);
+			return tmp;
+		}
+		node_t* tmp = smallest_subnode(node->right);
+		node->data = tmp->data; // TODO
+		node->right = bst_delete_recursive(bst, node->right, tmp->data);
+	} else if (cmp_result < 0) {
+		node->left = bst_delete_recursive(bst, node->left, data);
+	} else {
+		node->right = bst_delete_recursive(bst, node->right, data);
+	}
+	return node;
+}
+
+bool bst_contains(bst_t* bst, void* data)
+{
+	if (bst == NULL || data == NULL) {
+		printf("Error in bst_contains: NULL argument(s).\n");
+		return false;
+	}
+	return bst_contains_recursive(bst, bst->root, data);
+}
+
+bool bst_contains_recursive(bst_t* bst, node_t* node, void* data)
+{
+	int cmp_result = bst->cmp(data, node->data);
+	if (cmp_result == 0) {
+		goto succ;
+	} else if (cmp_result < 0) {
+		if (node->left == NULL) {
+			goto fail;
+		} else {
+			return bst_contains_recursive(bst, node->left, data);
+		}
+	} else {
+		if (node->right == NULL) {
+			goto fail;
+		} else {
+			return bst_contains_recursive(bst, node->right, data);
+		}
+	}
+succ:	if (bst->print != NULL) {
+		bst->print(data);
+		printf(" exists in the tree.\n");
+	}
+	return true;
+fail:	if (bst->print != NULL) {
+		bst->print(data);
+		printf(" does not exist in the tree.\n");
+	}
+	return false;
 }
 
 inline size_t bst_size(bst_t* bst)
@@ -317,6 +410,28 @@ static node_t* node_new(bst_t* bst, void* data)
 	return node;
 }
 
+void node_free(bst_t* bst, node_t* node)
+{
+	if (node != NULL) {
+		switch (bst->type) {
+		case BST_COPIED:
+			if (bst->data_free != NULL)
+				bst->data_free(node->data);
+			else
+				// TODO warning
+				;
+		case BST_POINTED:			/* fall through */
+			node->data = NULL;
+			break;
+		default:
+			printf("Invalid bst_type_t argument.\n");
+			exit(1);
+			break;
+		}
+	}
+}
+
+#if 0
 void node_free(node_t* node, void (*data_free)(void*))
 {
 	if (node != NULL) {
@@ -326,7 +441,7 @@ void node_free(node_t* node, void (*data_free)(void*))
 		free(node);
 	}
 }
-
+#endif
 
 
 //

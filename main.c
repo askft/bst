@@ -5,7 +5,7 @@
 typedef struct {
 	char	name[128];
 	int	age;
-} person_t ;
+} person_t;
 
 void test_person_heap	(void);
 void test_person	(void);
@@ -51,6 +51,25 @@ void test_int()
 	printf		("Balanced the tree!\n\n");
 
 	bst_print	(bst, int_print);
+
+	int a = 5;
+	int b = 20;
+
+	bst_contains	(bst, &a);
+	bst_contains	(bst, &b);
+
+	bst_delete	(bst, &a);
+	bst_contains	(bst, &a);
+	bst_print	(bst, int_print);
+
+	bst_delete	(bst, &arr[9]);
+	bst_contains	(bst, &arr[9]);
+	bst_print	(bst, int_print);
+
+	bst_delete	(bst, &arr[2]);
+	bst_contains	(bst, &arr[2]);
+	bst_print	(bst, int_print);
+
 	bst_free	(bst);
 
 	printf("\n\n");
@@ -87,6 +106,12 @@ void test_person()
 
 	bst_free	(tmp);
 	bst_print	(bst, person_print);
+
+	bst_contains	(bst, &persons[0]);
+	bst_delete	(bst, &persons[0]);
+	bst_contains	(bst, &persons[0]);
+	bst_print	(bst, person_print);
+
 	bst_free	(bst);
 
 	printf("\n\n");
@@ -132,6 +157,12 @@ void test_person_heap()
 	for (int i = 0; i < n; ++i) {
 		person_free_heap(persons[i]);
 	}
+
+	bst_print	(bst, person_print);
+
+	bst_contains	(bst, persons[0]);
+	bst_delete	(bst, persons[0]);
+	bst_contains	(bst, persons[0]);
 
 	/* Example showing that the data in the BST can outlive the data passed
 	 * to the add-function. */
@@ -211,32 +242,3 @@ int person_cmp(const void* a, const void* b)
 		return res_name;
 }
 
-
-
-
-
-
-
-#if 0
-	bst_add		(bst, person_new_heap("Alexander", 20));
-	bst_add		(bst, person_new_heap("Donald Knuth", 25));
-	bst_add		(bst, person_new_heap("Johnny Bravo", 16));
-	bst_add		(bst, person_new_heap("Knugen", 37));
-	bst_add		(bst, person_new_heap("N.C. Overguard", 37));
-
-	bst_print	(bst, person_print);
-
-	printf("\nBalancing the tree...\n");
-
-	bst_t* tmp;
-	tmp		= bst;
-	bst		= bst_balanced(tmp);
-	bst_free	(tmp);
-
-	printf("Balanced the tree!\n\n");
-
-	bst_print	(bst, person_print);
-
-	bst_free	(bst);
-
-#endif

@@ -121,6 +121,19 @@ bool	bst_add		(bst_t* bst, void* data);
 
 
 /*==============================================================================
+ * If found, delete the node containing `data` and return its value, otherwise
+ * return `NULL`.
+ */
+node_t*	bst_delete	(bst_t* bst, void* data);
+
+
+/*==============================================================================
+ * Return true if the BST contains `data`.
+ */
+bool	bst_contains	(bst_t* bst, void* data);
+
+
+/*==============================================================================
  * Return the number of nodes in `bst`. The lookup is performed in O(1) time. */
 size_t	bst_size	(bst_t* bst);
 
@@ -140,7 +153,15 @@ typedef enum { ORDER_PRE, ORDER_IN, ORDER_POST, } traversal_order_t;
 
 /*==============================================================================
  * Call the function pointed to by `execute` on the data pointed to by `data`
- * for every node in `bst` in the order specified by `order`.
+ * for every node in `bst` in the order specified by `order`. For instance,
+ * the function passed as `execute` could be:
+ * 
+ * 	void print_address(void* data)
+ * 	{
+ *		printf("%p\n", data);
+ * 	}
+ *
+ * ... and then used as `bst_execute(bst, print_address, ORDER_IN);`.
  */
 void	bst_execute	(bst_t*			bst,
 			 void			(*execute)(void* data),
@@ -160,8 +181,9 @@ bst_t*	bst_balanced	(bst_t* bst);
 
 /*==============================================================================
  * Print a representation of the BST to `stdout`. The `print` function pointer
- * is the same used when creating the tree.
- * TODO: Remove this inconvenience!
+ * is is of the same kind as the one used when creating the tree. The reason
+ * for explicitly passing `print` here is that the caller may want to print
+ * data differently depending on the situation.
  */
 void	bst_print	(bst_t* bst, void (*print)(void* data));
 

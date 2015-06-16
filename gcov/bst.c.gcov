@@ -1,8 +1,8 @@
         -:    0:Source:bst.c
         -:    0:Graph:bst.gcno
-        -:    0:Data:bst.gcda
-        -:    0:Runs:2
-        -:    0:Programs:1
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
         -:    1:#include "bst.h"
         -:    2:
         -:    3:#include <stdbool.h>
@@ -10,414 +10,565 @@
         -:    5:#include <stdlib.h>
         -:    6:#include <string.h>
         -:    7:
-        -:    8:// TODO: Check heap allocations for NULL returns and handle it properly.
-        -:    9:
-        -:   10:struct bst_t {
-        -:   11:	node_t*		root;
-        -:   12:	size_t		size;
-        -:   13:	size_t		elem_size;
-        -:   14:	bst_type_t	type;
-        -:   15:	int		(*cmp)(const void*, const void*);
-        -:   16:	void		(*data_free)(void*);
-        -:   17:	void		(*print)(void*);
-        -:   18:};
-        -:   19:
-        -:   20:struct node_t {
-        -:   21:	void*	data;
-        -:   22:	node_t*	left;
-        -:   23:	node_t*	right;
-        -:   24:};
-        -:   25:
-        -:   26:static node_t*	node_new (bst_t*, void* data);
-        -:   27:static void	node_free (node_t*, void (*data_free)(void*));
+        -:    8:// TODO:
+        -:    9:// 	- Check heap allocations for `NULL` returns and handle it properly.
+        -:   10:// 	- Check all arguments for `NULL`.
+        -:   11:
+        -:   12:
+        -:   13:struct bst_t {
+        -:   14:	node_t*		root;
+        -:   15:	size_t		size;
+        -:   16:	size_t		elem_size;
+        -:   17:	bst_type_t	type;
+        -:   18:	int		(*cmp)(const void*, const void*);
+        -:   19:	void		(*data_free)(void*);
+        -:   20:	void		(*print)(void*);
+        -:   21:};
+        -:   22:
+        -:   23:struct node_t {
+        -:   24:	void*	data;
+        -:   25:	node_t*	left;
+        -:   26:	node_t*	right;
+        -:   27:};
         -:   28:
-        -:   29:static void	bst_free_recursive (bst_t*, node_t*);
-        -:   30:static bool	bst_add_recursive (bst_t*, node_t*, void* data);
-        -:   31:static size_t	bst_height_recursive (bst_t*, node_t*);
-        -:   32:static int	bst_to_array (bst_t* bst, node_t* node, void* arr[], int index);
-        -:   33:static node_t*	bst_build_tree (bst_t*, void* arr[], int first, int last);
-        -:   34:static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
-        -:   35:
-        -:   36:
-        -:   37:/*==============================================================================
-        -:   38:	BINARY SEARCH TREE
-        -:   39:==============================================================================*/
+        -:   29:static node_t*	node_new (bst_t*, void* data);
+        -:   30:static void	node_free (bst_t*, node_t*);
+        -:   31:
+        -:   32:static void	bst_free_recursive	(bst_t*, node_t*);
+        -:   33:static bool	bst_add_recursive	(bst_t*, node_t*, void* data);
+        -:   34:node_t*		bst_delete_recursive	(bst_t*, node_t*, void* data);
+        -:   35:static bool	bst_contains_recursive	(bst_t*, node_t*, void* data);
+        -:   36:static size_t	bst_height_recursive	(bst_t*, node_t*);
+        -:   37:
+        -:   38:static int	bst_to_array		(bst_t*, node_t*,
+        -:   39:					 void* arr[], int index);
         -:   40:
-function bst_new called 12 returned 100% blocks executed 100%
-       12:   41:bst_t* bst_new(	bst_type_t	type,
-       12:   42:		size_t		elem_size,
-       12:   43:		int		(*cmp)(const void*, const void*),
-       12:   44:		void		(*data_free)(void*),
-       12:   45:		void		(*print)(void*))
-        -:   46:{
-       12:   47:	bst_t* bst = malloc(sizeof *bst);
-        -:   48:
-       12:   49:	bst->root	= NULL;
-       12:   50:	bst->size	= 0;
-       12:   51:	bst->elem_size	= elem_size;
-       12:   52:	bst->type	= type;
-       12:   53:	bst->cmp	= cmp;
-       12:   54:	bst->data_free	= data_free;
-       12:   55:	bst->print	= print;
-        -:   56:
-       12:   57:	return bst;
-        -:   58:}
+        -:   41:static node_t*	bst_build_tree		(bst_t*, void* arr[],
+        -:   42:					 int first, int last);
+        -:   43:
+        -:   44:static void	bst_print_recursive	(bst_t*, node_t*,
+        -:   45:					 void (*print)(void*), int);
+        -:   46:
+        -:   47:
+        -:   48:/*==============================================================================
+        -:   49:	BINARY SEARCH TREE
+        -:   50:==============================================================================*/
+        -:   51:
+function bst_new called 0 returned 0% blocks executed 0%
+    #####:   52:bst_t* bst_new(	bst_type_t	type,
+    #####:   53:		size_t		elem_size,
+    #####:   54:		int		(*cmp)(const void*, const void*),
+    #####:   55:		void		(*data_free)(void*),
+    #####:   56:		void		(*print)(void*))
+        -:   57:{
+    #####:   58:	bst_t* bst = malloc(sizeof *bst);
         -:   59:
-function bst_free called 12 returned 100% blocks executed 100%
-       12:   60:void bst_free(bst_t* bst)
-        -:   61:{
-       12:   62:	bst_free_recursive(bst, bst->root);
-       12:   63:	free(bst);
-       12:   64:}
-        -:   65:
-function bst_free_recursive called 172 returned 100% blocks executed 100%
-      172:   66:static void bst_free_recursive(bst_t* bst, node_t* node)
-        -:   67:{
-      172:   68:	if (node == NULL) {
-branch  0 taken 47%
-branch  1 taken 53%
-        -:   69:		return;
-        -:   70:	}
-       80:   71:	bst_free_recursive(bst, node->left);
-       80:   72:	bst_free_recursive(bst, node->right);
-       80:   73:	node_free(node, bst->data_free);
-      252:   74:}
-        -:   75:
-function bst_add called 40 returned 100% blocks executed 100%
-       40:   76:bool bst_add(bst_t* bst, void* data)
-        -:   77:{
-       40:   78:	if (bst->root == NULL) {
-branch  0 taken 15%
-branch  1 taken 85%
-        6:   79:		bst->root = node_new(bst, data);
-        6:   80:		bst->size += 1;
-        6:   81:		return true;
-        -:   82:	}
-       34:   83:	return bst_add_recursive(bst, bst->root, data);
-       40:   84:}
-        -:   85:
-function bst_add_recursive called 130 returned 100% blocks executed 63%
-      130:   86:static bool bst_add_recursive(bst_t* bst, node_t* node, void* data)
-        -:   87:{
-      130:   88:	int cmp_result = bst->cmp(data, node->data);
-      130:   89:	if (cmp_result == 0) {	/* Base case */
-branch  0 taken 0%
-branch  1 taken 100%
-    #####:   90:		printf("Node already exists inside the BST. Doing nothing.\n");
-    #####:   91:		return false;
-      130:   92:	} else if (cmp_result < 0) {
-branch  0 taken 0%
-branch  1 taken 100%
-    #####:   93:		if (node->left == NULL) {
+    #####:   60:	bst->root	= NULL;
+    #####:   61:	bst->size	= 0;
+    #####:   62:	bst->elem_size	= elem_size;
+    #####:   63:	bst->type	= type;
+    #####:   64:	bst->cmp	= cmp;
+    #####:   65:	bst->data_free	= data_free;
+    #####:   66:	bst->print	= print;
+        -:   67:
+    #####:   68:	return bst;
+        -:   69:}
+        -:   70:
+function bst_free called 0 returned 0% blocks executed 0%
+    #####:   71:void bst_free(bst_t* bst)
+        -:   72:{
+    #####:   73:	bst_free_recursive(bst, bst->root);
+    #####:   74:	free(bst);
+    #####:   75:}
+        -:   76:
+function bst_free_recursive called 0 returned 0% blocks executed 0%
+    #####:   77:static void bst_free_recursive(bst_t* bst, node_t* node)
+        -:   78:{
+    #####:   79:	if (node == NULL) {
 branch  0 never executed
 branch  1 never executed
-    #####:   94:			node->left = node_new(bst, data);
-    #####:   95:			bst->size += 1;
-    #####:   96:			return true;
-        -:   97:		} else {
-    #####:   98:			return bst_add_recursive(bst, node->left, data);
-        -:   99:		}
-        -:  100:	} else {
-      130:  101:		if (node->right == NULL) {
-branch  0 taken 26%
-branch  1 taken 74%
-       34:  102:			node->right = node_new(bst, data);
-       34:  103:			bst->size += 1;
-       34:  104:			return true;
-        -:  105:		} else {
-       96:  106:			return bst_add_recursive(bst, node->right, data);
-        -:  107:		}
-        -:  108:	}
-      130:  109:}
-        -:  110:
-function bst_size called 0 returned 0% blocks executed 0%
-    #####:  111:inline size_t bst_size(bst_t* bst)
-        -:  112:{
-    #####:  113:	return bst->size;
-        -:  114:}
-        -:  115:
-function bst_height called 0 returned 0% blocks executed 0%
-    #####:  116:size_t bst_height(bst_t* bst)
-        -:  117:{
-    #####:  118:	return bst_height_recursive(bst, bst->root);
-        -:  119:}
-        -:  120:
-function max called 0 returned 0% blocks executed 0%
-    #####:  121:static inline int max(const int a, const int b)
-        -:  122:{
-    #####:  123:	return a > b ? a : b;
-        -:  124:}
-        -:  125:
-function bst_height_recursive called 0 returned 0% blocks executed 0%
-    #####:  126:static size_t bst_height_recursive(bst_t* bst, node_t* node)
-        -:  127:{
-    #####:  128:	if (node == NULL) {
+        -:   80:		return;
+        -:   81:	}
+    #####:   82:	bst_free_recursive(bst, node->left);
+    #####:   83:	bst_free_recursive(bst, node->right);
+    #####:   84:	node_free(bst, node);
+    #####:   85:}
+        -:   86:
+function bst_add called 0 returned 0% blocks executed 0%
+    #####:   87:bool bst_add(bst_t* bst, void* data)
+        -:   88:{
+    #####:   89:	if (bst->root == NULL) {
 branch  0 never executed
 branch  1 never executed
-    #####:  129:		return 0;
-        -:  130:	} else {
-    #####:  131:		return 1 + max(	bst_height_recursive(bst, node->left),
-    #####:  132:				bst_height_recursive(bst, node->right));
-        -:  133:	}
-    #####:  134:}
+    #####:   90:		bst->root = node_new(bst, data);
+    #####:   91:		bst->size += 1;
+    #####:   92:		return true;
+        -:   93:	}
+    #####:   94:	return bst_add_recursive(bst, bst->root, data);
+    #####:   95:}
+        -:   96:
+function bst_add_recursive called 0 returned 0% blocks executed 0%
+    #####:   97:static bool bst_add_recursive(bst_t* bst, node_t* node, void* data)
+        -:   98:{
+    #####:   99:	int cmp_result = bst->cmp(data, node->data);
+    #####:  100:	if (cmp_result == 0) {	/* Base case */
+branch  0 never executed
+branch  1 never executed
+    #####:  101:		printf("Node already exists inside the BST. Doing nothing.\n");
+    #####:  102:		return false;
+    #####:  103:	} else if (cmp_result < 0) {
+branch  0 never executed
+branch  1 never executed
+    #####:  104:		if (node->left == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  105:			node->left = node_new(bst, data);
+    #####:  106:			bst->size += 1;
+    #####:  107:			return true;
+        -:  108:		} else {
+    #####:  109:			return bst_add_recursive(bst, node->left, data);
+        -:  110:		}
+        -:  111:	} else {
+    #####:  112:		if (node->right == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  113:			node->right = node_new(bst, data);
+    #####:  114:			bst->size += 1;
+    #####:  115:			return true;
+        -:  116:		} else {
+    #####:  117:			return bst_add_recursive(bst, node->right, data);
+        -:  118:		}
+        -:  119:	}
+    #####:  120:}
+        -:  121:
+function smallest_subnode called 0 returned 0% blocks executed 0%
+    #####:  122:static node_t* smallest_subnode(node_t* node)
+        -:  123:{
+    #####:  124:	node_t* current = node;
+    #####:  125:	while (current->left != NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  126:		current = current->left;
+    #####:  127:	}
+    #####:  128:	return current;
+        -:  129:}
+        -:  130:
+function bst_delete called 0 returned 0% blocks executed 0%
+    #####:  131:node_t* bst_delete(bst_t* bst, void* data)
+        -:  132:{
+    #####:  133:	return bst_delete_recursive(bst, bst->root, data);
+        -:  134:}
         -:  135:
-        -:  136:static void
-        -:  137:bst_execute_preorder_recursive  (bst_t*, node_t*, void (*execute)(void*));
-        -:  138:
-        -:  139:static void
-        -:  140:bst_execute_inorder_recursive   (bst_t*, node_t*, void (*execute)(void*));
+function bst_delete_recursive called 0 returned 0% blocks executed 0%
+    #####:  136:node_t* bst_delete_recursive(bst_t* bst, node_t* node, void* data)
+        -:  137:{
+    #####:  138:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  139:		return node;
+        -:  140:	}
         -:  141:
-        -:  142:static void
-        -:  143:bst_execute_postorder_recursive (bst_t*, node_t*, void (*execute)(void*));
-        -:  144:
-        -:  145:#define BST_EXECUTE(ORDER) bst_execute_ ## ORDER ## _recursive
-        -:  146:
-function bst_execute called 0 returned 0% blocks executed 0%
-    #####:  147:void bst_execute(bst_t*			bst,
-    #####:  148:		 void			(*execute)(void* data),
-    #####:  149:		 traversal_order_t	order)
-        -:  150:{
-    #####:  151:	switch (order) {
+    #####:  142:	int cmp_result = bst->cmp(data, node->data);
+        -:  143:
+    #####:  144:	if (cmp_result == 0) {
+branch  0 never executed
+branch  1 never executed
+    #####:  145:		if (node->left == NULL) {
 branch  0 never executed
 branch  1 never executed
 branch  2 never executed
 branch  3 never executed
-    #####:  152:	case ORDER_PRE:	 BST_EXECUTE(preorder)	(bst, bst->root, execute);break;
-    #####:  153:	case ORDER_IN:	 BST_EXECUTE(inorder)	(bst, bst->root, execute);break;
-    #####:  154:	case ORDER_POST: BST_EXECUTE(postorder)	(bst, bst->root, execute);break;
-        -:  155:	}
-    #####:  156:}
-        -:  157:
-        -:  158:static void
-function bst_execute_preorder_recursive called 0 returned 0% blocks executed 0%
-    #####:  159:bst_execute_preorder_recursive(	bst_t*	bst,
-    #####:  160:				node_t* node,
-    #####:  161:				void	(*execute)(void*))
-        -:  162:{
-    #####:  163:	if (node == NULL) {
+    #####:  146:			node_t* tmp = node->right;
+    #####:  147:			node_free(bst, node);
+    #####:  148:			return tmp;
+    #####:  149:		} else if (node->right == NULL) {
 branch  0 never executed
 branch  1 never executed
-        -:  164:		return;
-        -:  165:	}
-    #####:  166:	execute(node->data);
-    #####:  167:	bst_execute_preorder_recursive(bst, node->left, execute);
-    #####:  168:	bst_execute_preorder_recursive(bst, node->right, execute);
-    #####:  169:}
-        -:  170:
-        -:  171:static void
-function bst_execute_inorder_recursive called 0 returned 0% blocks executed 0%
-    #####:  172:bst_execute_inorder_recursive(	bst_t*	bst,
-    #####:  173:				node_t*	node,
-    #####:  174:				void	(*execute)(void*))
+    #####:  150:			node_t* tmp = node->left;
+    #####:  151:			node_free(bst, node);
+    #####:  152:			return tmp;
+        -:  153:		}
+    #####:  154:		node_t* tmp = smallest_subnode(node->right);
+    #####:  155:		node->data = tmp->data; // TODO
+    #####:  156:		node->right = bst_delete_recursive(bst, node->right, tmp->data);
+    #####:  157:	} else if (cmp_result < 0) {
+branch  0 never executed
+branch  1 never executed
+    #####:  158:		node->left = bst_delete_recursive(bst, node->left, data);
+    #####:  159:	} else {
+    #####:  160:		node->right = bst_delete_recursive(bst, node->right, data);
+        -:  161:	}
+    #####:  162:	return node;
+    #####:  163:}
+        -:  164:
+function bst_contains called 0 returned 0% blocks executed 0%
+    #####:  165:bool bst_contains(bst_t* bst, void* data)
+        -:  166:{
+    #####:  167:	if (bst == NULL || data == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  168:		printf("Error in bst_contains: NULL argument(s).\n");
+    #####:  169:		return false;
+        -:  170:	}
+    #####:  171:	return bst_contains_recursive(bst, bst->root, data);
+    #####:  172:}
+        -:  173:
+function bst_contains_recursive called 0 returned 0% blocks executed 0%
+    #####:  174:bool bst_contains_recursive(bst_t* bst, node_t* node, void* data)
         -:  175:{
-    #####:  176:	if (node == NULL) {
+    #####:  176:	int cmp_result = bst->cmp(data, node->data);
+    #####:  177:	if (cmp_result == 0) {
 branch  0 never executed
 branch  1 never executed
-        -:  177:		return;
-        -:  178:	}
-    #####:  179:	bst_execute_preorder_recursive(bst, node->left, execute);
-    #####:  180:	execute(node->data);
-    #####:  181:	bst_execute_preorder_recursive(bst, node->right, execute);
-    #####:  182:}
-        -:  183:
-        -:  184:static void
-function bst_execute_postorder_recursive called 0 returned 0% blocks executed 0%
-    #####:  185:bst_execute_postorder_recursive(bst_t*	bst,
-    #####:  186:				node_t*	node,
-    #####:  187:				void	(*execute)(void*))
-        -:  188:{
-    #####:  189:	if (node == NULL) {
+        -:  178:		goto succ;
+    #####:  179:	} else if (cmp_result < 0) {
 branch  0 never executed
 branch  1 never executed
-        -:  190:		return;
+    #####:  180:		if (node->left == NULL) {
+branch  0 never executed
+branch  1 never executed
+        -:  181:			goto fail;
+        -:  182:		} else {
+    #####:  183:			return bst_contains_recursive(bst, node->left, data);
+        -:  184:		}
+        -:  185:	} else {
+    #####:  186:		if (node->right == NULL) {
+branch  0 never executed
+branch  1 never executed
+        -:  187:			goto fail;
+        -:  188:		} else {
+    #####:  189:			return bst_contains_recursive(bst, node->right, data);
+        -:  190:		}
         -:  191:	}
-    #####:  192:	bst_execute_preorder_recursive(bst, node->left, execute);
-    #####:  193:	bst_execute_preorder_recursive(bst, node->right, execute);
-    #####:  194:	execute(node->data);
-    #####:  195:}
-        -:  196:
-function bst_balanced called 6 returned 100% blocks executed 83%
-        6:  197:bst_t* bst_balanced(bst_t* bst)
-        -:  198:{
-       12:  199:	if (bst == NULL || bst->root == NULL) {
-branch  0 taken 100%
-branch  1 taken 0%
-branch  2 taken 0%
-branch  3 taken 100%
-    #####:  200:		printf("Nothing to balance.\n");
-    #####:  201:		return NULL;
-        -:  202:	}
+    #####:  192:succ:	if (bst->print != NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  193:		bst->print(data);
+    #####:  194:		printf(" exists in the tree.\n");
+    #####:  195:	}
+    #####:  196:	return true;
+    #####:  197:fail:	if (bst->print != NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  198:		bst->print(data);
+    #####:  199:		printf(" does not exist in the tree.\n");
+    #####:  200:	}
+    #####:  201:	return false;
+    #####:  202:}
         -:  203:
-        6:  204:	void*	arr[bst->size];
-        -:  205:	int	last_index;
-        -:  206:	bst_t*	new_bst;
-        -:  207:
-        6:  208:	last_index	= bst_to_array(bst, bst->root, arr, 0) - 1;
-        -:  209:
-        6:  210:	new_bst		= bst_new(bst->type,
-        -:  211:				  bst->elem_size,
-        -:  212:				  bst->cmp,
-        -:  213:				  bst->data_free,
-        -:  214:				  bst->print);
-        -:  215:
-        6:  216:	new_bst->root		= bst_build_tree(bst, arr, 0, last_index);
-        6:  217:	new_bst->size		= bst->size;
-        6:  218:	new_bst->cmp		= bst->cmp;
-        6:  219:	new_bst->data_free	= bst->data_free;
-        6:  220:	new_bst->print		= bst->print;
-        -:  221:
-        -:  222:	return new_bst;
-       12:  223:}
-        -:  224:
-        -:  225:static int
-function bst_to_array called 86 returned 100% blocks executed 100%
-       86:  226:bst_to_array(	bst_t*	bst,
-       86:  227:		node_t*	node,
-       86:  228:		void*	arr[],
-       86:  229:		int	index)
-        -:  230:{
-       86:  231:	if (node == NULL) {
-branch  0 taken 53%
-branch  1 taken 47%
-       46:  232:		return index;
-        -:  233:	}
-       40:  234:	index	   = bst_to_array(bst, node->left, arr, index);
-       40:  235:	arr[index] = node->data;
-       40:  236:	index	   = bst_to_array(bst, node->right, arr, index + 1);
-       40:  237:	return index;
-       86:  238:}
+function bst_size called 0 returned 0% blocks executed 0%
+    #####:  204:inline size_t bst_size(bst_t* bst)
+        -:  205:{
+    #####:  206:	return bst->size;
+        -:  207:}
+        -:  208:
+function bst_height called 0 returned 0% blocks executed 0%
+    #####:  209:size_t bst_height(bst_t* bst)
+        -:  210:{
+    #####:  211:	return bst_height_recursive(bst, bst->root);
+        -:  212:}
+        -:  213:
+function max called 0 returned 0% blocks executed 0%
+    #####:  214:static inline int max(const int a, const int b)
+        -:  215:{
+    #####:  216:	return a > b ? a : b;
+        -:  217:}
+        -:  218:
+function bst_height_recursive called 0 returned 0% blocks executed 0%
+    #####:  219:static size_t bst_height_recursive(bst_t* bst, node_t* node)
+        -:  220:{
+    #####:  221:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  222:		return 0;
+        -:  223:	} else {
+    #####:  224:		return 1 + max(	bst_height_recursive(bst, node->left),
+    #####:  225:				bst_height_recursive(bst, node->right));
+        -:  226:	}
+    #####:  227:}
+        -:  228:
+        -:  229:static void
+        -:  230:bst_execute_preorder_recursive  (bst_t*, node_t*, void (*execute)(void*));
+        -:  231:
+        -:  232:static void
+        -:  233:bst_execute_inorder_recursive   (bst_t*, node_t*, void (*execute)(void*));
+        -:  234:
+        -:  235:static void
+        -:  236:bst_execute_postorder_recursive (bst_t*, node_t*, void (*execute)(void*));
+        -:  237:
+        -:  238:#define BST_EXECUTE(ORDER) bst_execute_ ## ORDER ## _recursive
         -:  239:
-function bst_build_tree called 86 returned 100% blocks executed 100%
-       86:  240:static node_t* bst_build_tree(bst_t* bst, void* arr[], int first, int last)
-        -:  241:{
-       86:  242:	if (first > last) {
-branch  0 taken 53%
-branch  1 taken 47%
-       46:  243:		return NULL;
-        -:  244:	}
-        -:  245:	int		mid;
-        -:  246:	node_t*		mid_node;
-       40:  247:	mid		= (first + last) / 2;
-       40:  248:	mid_node	= node_new(bst, arr[mid]);
-       40:  249:	mid_node->left	= bst_build_tree(bst, arr, first, mid - 1);
-       40:  250:	mid_node->right	= bst_build_tree(bst, arr, mid + 1, last);
-       40:  251:	return mid_node;
-       86:  252:}
-        -:  253:
-function bst_print called 14 returned 100% blocks executed 80%
-       14:  254:void bst_print(bst_t* bst, void (*print)(void* data))
+function bst_execute called 0 returned 0% blocks executed 0%
+    #####:  240:void bst_execute(bst_t*			bst,
+    #####:  241:		 void			(*execute)(void* data),
+    #####:  242:		 traversal_order_t	order)
+        -:  243:{
+    #####:  244:	switch (order) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####:  245:	case ORDER_PRE:	 BST_EXECUTE(preorder)	(bst, bst->root, execute);break;
+    #####:  246:	case ORDER_IN:	 BST_EXECUTE(inorder)	(bst, bst->root, execute);break;
+    #####:  247:	case ORDER_POST: BST_EXECUTE(postorder)	(bst, bst->root, execute);break;
+        -:  248:	}
+    #####:  249:}
+        -:  250:
+        -:  251:static void
+function bst_execute_preorder_recursive called 0 returned 0% blocks executed 0%
+    #####:  252:bst_execute_preorder_recursive(	bst_t*	bst,
+    #####:  253:				node_t* node,
+    #####:  254:				void	(*execute)(void*))
         -:  255:{
-       14:  256:	if (print == NULL) {
-branch  0 taken 0%
-branch  1 taken 100%
-    #####:  257:		printf("<No print function supplied.>");
-    #####:  258:		return;
-        -:  259:	}
-       14:  260:	printf("Printing the BST:\n");
-       14:  261:	bst_print_recursive(bst, bst->root, print, 0);
-       28:  262:}
+    #####:  256:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+        -:  257:		return;
+        -:  258:	}
+    #####:  259:	execute(node->data);
+    #####:  260:	bst_execute_preorder_recursive(bst, node->left, execute);
+    #####:  261:	bst_execute_preorder_recursive(bst, node->right, execute);
+    #####:  262:}
         -:  263:
         -:  264:static void
-function bst_print_recursive called 194 returned 100% blocks executed 100%
-      194:  265:bst_print_recursive(bst_t*	bst,
-      194:  266:		    node_t*	node,
-      194:  267:		    void	(*print)(void* data),
-      194:  268:		    int		level)
-        -:  269:{
-      194:  270:	printf("  ");
-     1564:  271:	for (int i = 0; i < level; ++i) {
-branch  0 taken 75%
-branch  1 taken 25%
-      588:  272:		printf("%s", i == 0 ? "|——" : "———");
-        -:  273:	}
-      194:  274:	if (node == NULL) {
-branch  0 taken 54%
-branch  1 taken 46%
-      104:  275:		printf("( )\n");
-      104:  276:		return;
-        -:  277:	}
-       90:  278:	printf("(");
-       90:  279:	print(node->data);
-       90:  280:	printf(")\n");
-       90:  281:	bst_print_recursive(bst, node->left, print, level + 1);
-       90:  282:	bst_print_recursive(bst, node->right, print, level + 1);
-      284:  283:}
-        -:  284:
-        -:  285:
-        -:  286:
-        -:  287:/*==============================================================================
-        -:  288:	NODE
-        -:  289:==============================================================================*/
-        -:  290:
-function node_new called 80 returned 100% blocks executed 83%
-       80:  291:static node_t* node_new(bst_t* bst, void* data)
-        -:  292:{
-       80:  293:	node_t*	node = malloc(sizeof *node);
-        -:  294:
-       80:  295:	switch (bst->type) {
-branch  0 taken 25%
-branch  1 taken 75%
-branch  2 taken 0%
+function bst_execute_inorder_recursive called 0 returned 0% blocks executed 0%
+    #####:  265:bst_execute_inorder_recursive(	bst_t*	bst,
+    #####:  266:				node_t*	node,
+    #####:  267:				void	(*execute)(void*))
+        -:  268:{
+    #####:  269:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+        -:  270:		return;
+        -:  271:	}
+    #####:  272:	bst_execute_preorder_recursive(bst, node->left, execute);
+    #####:  273:	execute(node->data);
+    #####:  274:	bst_execute_preorder_recursive(bst, node->right, execute);
+    #####:  275:}
+        -:  276:
+        -:  277:static void
+function bst_execute_postorder_recursive called 0 returned 0% blocks executed 0%
+    #####:  278:bst_execute_postorder_recursive(bst_t*	bst,
+    #####:  279:				node_t*	node,
+    #####:  280:				void	(*execute)(void*))
+        -:  281:{
+    #####:  282:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+        -:  283:		return;
+        -:  284:	}
+    #####:  285:	bst_execute_preorder_recursive(bst, node->left, execute);
+    #####:  286:	bst_execute_preorder_recursive(bst, node->right, execute);
+    #####:  287:	execute(node->data);
+    #####:  288:}
+        -:  289:
+function bst_balanced called 0 returned 0% blocks executed 0%
+    #####:  290:bst_t* bst_balanced(bst_t* bst)
+        -:  291:{
+    #####:  292:	if (bst == NULL || bst->root == NULL) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+branch  3 never executed
+    #####:  293:		printf("Nothing to balance.\n");
+    #####:  294:		return NULL;
+        -:  295:	}
         -:  296:
-        -:  297:	/* The BST makes a private copy of the data. */
-        -:  298:	case BST_COPIED:
-       20:  299:		node->data = malloc(bst->elem_size);
-       20:  300:		memcpy(node->data, data, bst->elem_size);
-       20:  301:		break;
+    #####:  297:	void*	arr[bst->size];
+        -:  298:	int	last_index;
+        -:  299:	bst_t*	new_bst;
+        -:  300:
+    #####:  301:	last_index	= bst_to_array(bst, bst->root, arr, 0) - 1;
         -:  302:
-        -:  303:	/* The BST does not take ownership of the data. */
-        -:  304:	case BST_POINTED:
-       60:  305:		node->data = data;
-       60:  306:		break;
-        -:  307:
-        -:  308:	default:
-    #####:  309:		printf("Invalid bst_type_t argument.\n");
-    #####:  310:		exit(1);
-        -:  311:		break;
-        -:  312:	}
-        -:  313:
-       80:  314:	node->left	= NULL;
-       80:  315:	node->right	= NULL;
-        -:  316:
-       80:  317:	return node;
-        -:  318:}
-        -:  319:
-function node_free called 80 returned 100% blocks executed 100%
-       80:  320:void node_free(node_t* node, void (*data_free)(void*))
-        -:  321:{
-       80:  322:	if (node != NULL) {
-branch  0 taken 100%
-branch  1 taken 0%
-       80:  323:		if (data_free != NULL) {
-branch  0 taken 25%
-branch  1 taken 75%
-       20:  324:			data_free(node->data);
-       20:  325:		}
-       80:  326:		free(node);
-       80:  327:	}
-       80:  328:}
-        -:  329:
-        -:  330:
-        -:  331:
-        -:  332://
-        -:  333:// TODO (Possible implementation):
-        -:  334:// 	Eventually I might make a function that takes a pointer to a pointer
-        -:  335:// 	to a `struct bst` and balances it in place. I imagine it would be
-        -:  336:// 	useful if one does not want to keep the old unbalanced tree (it would
-        -:  337:// 	result in less boilerplate API).
-        -:  338://
-        -:  339:// 	The function declaration would look like the following:
-        -:  340://
-        -:  341://		void bst_balance(bst_t** bst);
-        -:  342://
-        -:  343://	and its implementation would be very similar (algorithmically)
-        -:  344://	to the existing `bst_balanced` function.
-        -:  345://
+    #####:  303:	new_bst		= bst_new(bst->type,
+        -:  304:				  bst->elem_size,
+        -:  305:				  bst->cmp,
+        -:  306:				  bst->data_free,
+        -:  307:				  bst->print);
+        -:  308:
+    #####:  309:	new_bst->root		= bst_build_tree(bst, arr, 0, last_index);
+    #####:  310:	new_bst->size		= bst->size;
+    #####:  311:	new_bst->cmp		= bst->cmp;
+    #####:  312:	new_bst->data_free	= bst->data_free;
+    #####:  313:	new_bst->print		= bst->print;
+        -:  314:
+        -:  315:	return new_bst;
+    #####:  316:}
+        -:  317:
+        -:  318:static int
+function bst_to_array called 0 returned 0% blocks executed 0%
+    #####:  319:bst_to_array(	bst_t*	bst,
+    #####:  320:		node_t*	node,
+    #####:  321:		void*	arr[],
+    #####:  322:		int	index)
+        -:  323:{
+    #####:  324:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  325:		return index;
+        -:  326:	}
+    #####:  327:	index	   = bst_to_array(bst, node->left, arr, index);
+    #####:  328:	arr[index] = node->data;
+    #####:  329:	index	   = bst_to_array(bst, node->right, arr, index + 1);
+    #####:  330:	return index;
+    #####:  331:}
+        -:  332:
+function bst_build_tree called 0 returned 0% blocks executed 0%
+    #####:  333:static node_t* bst_build_tree(bst_t* bst, void* arr[], int first, int last)
+        -:  334:{
+    #####:  335:	if (first > last) {
+branch  0 never executed
+branch  1 never executed
+    #####:  336:		return NULL;
+        -:  337:	}
+        -:  338:	int		mid;
+        -:  339:	node_t*		mid_node;
+    #####:  340:	mid		= (first + last) / 2;
+    #####:  341:	mid_node	= node_new(bst, arr[mid]);
+    #####:  342:	mid_node->left	= bst_build_tree(bst, arr, first, mid - 1);
+    #####:  343:	mid_node->right	= bst_build_tree(bst, arr, mid + 1, last);
+    #####:  344:	return mid_node;
+    #####:  345:}
         -:  346:
-        -:  347:#if 0
-        -:  348:void bst_balance(bst_t** bst, size_t elem_size)
-        -:  349:{
-        -:  350:	// Implement!
-        -:  351:}
-        -:  352:#endif
-        -:  353:
+function bst_print called 0 returned 0% blocks executed 0%
+    #####:  347:void bst_print(bst_t* bst, void (*print)(void* data))
+        -:  348:{
+    #####:  349:	if (print == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  350:		printf("<No print function supplied.>");
+    #####:  351:		return;
+        -:  352:	}
+    #####:  353:	printf("Printing the BST:\n");
+    #####:  354:	bst_print_recursive(bst, bst->root, print, 0);
+    #####:  355:}
+        -:  356:
+        -:  357:static void
+function bst_print_recursive called 0 returned 0% blocks executed 0%
+    #####:  358:bst_print_recursive(bst_t*	bst,
+    #####:  359:		    node_t*	node,
+    #####:  360:		    void	(*print)(void* data),
+    #####:  361:		    int		level)
+        -:  362:{
+    #####:  363:	printf("  ");
+    #####:  364:	for (int i = 0; i < level; ++i) {
+branch  0 never executed
+branch  1 never executed
+    #####:  365:		printf("%s", i == 0 ? "|——" : "———");
+        -:  366:	}
+    #####:  367:	if (node == NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  368:		printf("( )\n");
+    #####:  369:		return;
+        -:  370:	}
+    #####:  371:	printf("(");
+    #####:  372:	print(node->data);
+    #####:  373:	printf(")\n");
+    #####:  374:	bst_print_recursive(bst, node->left, print, level + 1);
+    #####:  375:	bst_print_recursive(bst, node->right, print, level + 1);
+    #####:  376:}
+        -:  377:
+        -:  378:
+        -:  379:
+        -:  380:/*==============================================================================
+        -:  381:	NODE
+        -:  382:==============================================================================*/
+        -:  383:
+function node_new called 0 returned 0% blocks executed 0%
+    #####:  384:static node_t* node_new(bst_t* bst, void* data)
+        -:  385:{
+    #####:  386:	node_t*	node = malloc(sizeof *node);
+        -:  387:
+    #####:  388:	switch (bst->type) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+        -:  389:
+        -:  390:	/* The BST makes a private copy of the data. */
+        -:  391:	case BST_COPIED:
+    #####:  392:		node->data = malloc(bst->elem_size);
+    #####:  393:		memcpy(node->data, data, bst->elem_size);
+    #####:  394:		break;
+        -:  395:
+        -:  396:	/* The BST does not take ownership of the data. */
+        -:  397:	case BST_POINTED:
+    #####:  398:		node->data = data;
+    #####:  399:		break;
+        -:  400:
+        -:  401:	default:
+    #####:  402:		printf("Invalid bst_type_t argument.\n");
+    #####:  403:		exit(1);
+        -:  404:		break;
+        -:  405:	}
+        -:  406:
+    #####:  407:	node->left	= NULL;
+    #####:  408:	node->right	= NULL;
+        -:  409:
+    #####:  410:	return node;
+        -:  411:}
+        -:  412:
+function node_free called 0 returned 0% blocks executed 0%
+    #####:  413:void node_free(bst_t* bst, node_t* node)
+        -:  414:{
+    #####:  415:	if (node != NULL) {
+branch  0 never executed
+branch  1 never executed
+    #####:  416:		switch (bst->type) {
+branch  0 never executed
+branch  1 never executed
+branch  2 never executed
+        -:  417:		case BST_COPIED:
+    #####:  418:			if (bst->data_free != NULL)
+branch  0 never executed
+branch  1 never executed
+    #####:  419:				bst->data_free(node->data);
+        -:  420:			else
+        -:  421:				// TODO warning
+        -:  422:				;
+        -:  423:		case BST_POINTED:			/* fall through */
+    #####:  424:			node->data = NULL;
+        -:  425:			break;
+        -:  426:		default:
+    #####:  427:			printf("Invalid bst_type_t argument.\n");
+    #####:  428:			exit(1);
+        -:  429:			break;
+        -:  430:		}
+    #####:  431:	}
+    #####:  432:}
+        -:  433:
+        -:  434:#if 0
+        -:  435:void node_free(node_t* node, void (*data_free)(void*))
+        -:  436:{
+        -:  437:	if (node != NULL) {
+        -:  438:		if (data_free != NULL) {
+        -:  439:			data_free(node->data);
+        -:  440:		}
+        -:  441:		free(node);
+        -:  442:	}
+        -:  443:}
+        -:  444:#endif
+        -:  445:
+        -:  446:
+        -:  447://
+        -:  448:// TODO (Possible implementation):
+        -:  449:// 	Eventually I might make a function that takes a pointer to a pointer
+        -:  450:// 	to a `struct bst` and balances it in place. I imagine it would be
+        -:  451:// 	useful if one does not want to keep the old unbalanced tree (it would
+        -:  452:// 	result in less boilerplate API).
+        -:  453://
+        -:  454:// 	The function declaration would look like the following:
+        -:  455://
+        -:  456://		void bst_balance(bst_t** bst);
+        -:  457://
+        -:  458://	and its implementation would be very similar (algorithmically)
+        -:  459://	to the existing `bst_balanced` function.
+        -:  460://
+        -:  461:
+        -:  462:#if 0
+        -:  463:void bst_balance(bst_t** bst, size_t elem_size)
+        -:  464:{
+        -:  465:	// Implement!
+        -:  466:}
+        -:  467:#endif
+        -:  468:

@@ -23,8 +23,8 @@ void		int_print	(void* data);
 int main(void)
 {
 	test_int	();
-//	test_person	();
-//	test_person_heap();
+	test_person	();
+	test_person_heap();
 }
 
 void test_int()
@@ -35,7 +35,7 @@ void test_int()
 	bst_t*	bst;
 	int	arr[10];
 
-	bst = bst_new(BST_POINT, sizeof(int), int_cmp, NULL, int_print);
+	bst = bst_new(BST_POINTED, sizeof(int), int_cmp, NULL, int_print);
 
 	for (int i = 0; i < 10; ++i) {
 		arr[i] = i + 1;
@@ -62,7 +62,7 @@ void test_person()
 		" test_person\n"
 		"----------------------------------------\n\n" );
 
-	bst_t* bst	= bst_new(BST_POINT,
+	bst_t* bst	= bst_new(BST_POINTED,
 				  sizeof(person_t),
 				  person_cmp, NULL, person_print);
 	bst_t* tmp	= bst;
@@ -98,7 +98,7 @@ void test_person_heap()
 		" test_person alloc\n"
 		"----------------------------------------\n\n" );
 
-	bst_t* bst	= bst_new(BST_COPY, sizeof(person_t), person_cmp,
+	bst_t* bst	= bst_new(BST_COPIED, sizeof(person_t), person_cmp,
 				  person_free_heap, person_print);
 	bst_t* tmp	= bst;
 
@@ -114,7 +114,7 @@ void test_person_heap()
 
 	int n = sizeof(persons) / sizeof(persons[0]);
 
-	/* Add the heap-allocated objects to the BST. Because BST_COPY was
+	/* Add the heap-allocated objects to the BST. Because BST_COPIED was
 	 * used when creating the tree, these object will be copied to the
 	 * tree. */
 	for (int i = 0; i < n; ++i) {

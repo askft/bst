@@ -11,7 +11,7 @@ struct bst_t {
 	node_t*		root;
 	size_t		size;
 	size_t		elem_size;
-	data_handling_t	data_handling;
+	bst_type_t	type;
 	int		(*cmp)(const void*, const void*);
 	void		(*data_free)(void*);
 	void		(*print)(void*);
@@ -38,21 +38,21 @@ static void	bst_print_recursive(bst_t*, node_t*, void (*print)(void*), int);
 	BINARY SEARCH TREE
 ==============================================================================*/
 
-bst_t* bst_new(	data_handling_t	data_handling,
-		size_t	elem_size,
-		int	(*cmp)(const void*, const void*),
-		void	(*data_free)(void*),
-		void	(*print)(void*))
+bst_t* bst_new(	bst_type_t	type,
+		size_t		elem_size,
+		int		(*cmp)(const void*, const void*),
+		void		(*data_free)(void*),
+		void		(*print)(void*))
 {
 	bst_t* bst = malloc(sizeof *bst);
 
-	bst->root		= NULL;
-	bst->size		= 0;
-	bst->elem_size		= elem_size;
-	bst->data_handling	= data_handling;
-	bst->cmp		= cmp;
-	bst->data_free		= data_free;
-	bst->print		= print;
+	bst->root	= NULL;
+	bst->size	= 0;
+	bst->elem_size	= elem_size;
+	bst->type	= type;
+	bst->cmp	= cmp;
+	bst->data_free	= data_free;
+	bst->print	= print;
 
 	return bst;
 }
@@ -207,7 +207,7 @@ bst_t* bst_balanced(bst_t* bst)
 
 	last_index	= bst_to_array(bst, bst->root, arr, 0) - 1;
 
-	new_bst		= bst_new(bst->data_handling,
+	new_bst		= bst_new(bst->type,
 				  bst->elem_size,
 				  bst->cmp,
 				  bst->data_free,
@@ -253,6 +253,10 @@ static node_t* bst_build_tree(bst_t* bst, void* arr[], int first, int last)
 
 void bst_print(bst_t* bst, void (*print)(void* data))
 {
+	if (print == NULL) {
+		printf("<No print function supplied.>");
+		return;
+	}
 	printf("Printing the BST:\n");
 	bst_print_recursive(bst, bst->root, print, 0);
 }
@@ -272,11 +276,7 @@ bst_print_recursive(bst_t*	bst,
 		return;
 	}
 	printf("(");
-	if (print != NULL) {
-		print(node->data);
-	} else {
-		printf("<No print function supplied.>");
-	}
+	print(node->data);
 	printf(")\n");
 	bst_print_recursive(bst, node->left, print, level + 1);
 	bst_print_recursive(bst, node->right, print, level + 1);
@@ -292,21 +292,21 @@ static node_t* node_new(bst_t* bst, void* data)
 {
 	node_t*	node = malloc(sizeof *node);
 
-	switch (bst->data_handling) {
+	switch (bst->type) {
 
 	/* The BST makes a private copy of the data. */
-	case BST_COPY:
+	case BST_COPIED:
 		node->data = malloc(bst->elem_size);
 		memcpy(node->data, data, bst->elem_size);
 		break;
 
 	/* The BST does not take ownership of the data. */
-	case BST_POINT:
+	case BST_POINTED:
 		node->data = data;
 		break;
 
 	default:
-		printf("Invalind data_handling argument.\n");
+		printf("Invalid bst_type_t argument.\n");
 		exit(1);
 		break;
 	}

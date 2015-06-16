@@ -12,17 +12,17 @@ typedef struct node_t node_t;
  * handled. Please read the documentation for `bst_new` for a detailed
  * description of the intended usage of this enum.
  */
-typedef enum { BST_COPY, BST_POINT, } data_handling_t;
+typedef enum { BST_COPIED, BST_POINTED, } bst_type_t;
 
 
 /*==============================================================================
  * Create a new BST (Binary Search Tree).
  *
- * @arg `data_handling`
+ * @arg `type`
  * 	An enum dictating how the BST will handle the data that is passed to
  * 	it when adding nodes.
  *
- * 		- BST_COPY:
+ * 		- BST_COPIED:
  * 			The BST will allocate new memory on the heap for the
  * 			data. This data does not have to be explicitly freed by
  * 			the caller; HOWEVER, he or she has to write a custom
@@ -35,22 +35,22 @@ typedef enum { BST_COPY, BST_POINT, } data_handling_t;
  * 					free(data);
  * 				}
  *
- * 			Using BST_COPY implicitly results in the BST being able
- * 			to have a lifetime of desired length, since the data in
- * 			the nodes is not lost when the original data that was
- * 			passed as arguments to the `bst_add` function goes out
- * 			of scope.
+ * 			Using BST_COPIED implicitly results in the BST being
+ * 			able to have a lifetime of desired length, since the
+ * 			data in the nodes is not lost when the original data
+ * 			that was passed as arguments to the `bst_add` function
+ * 			goes out of scope.
  *
- * 		- BST_POINT:
+ * 		- BST_POINTED:
  * 			The BST will only point the data part of each node to
  * 			the data passed to the `bst_add` function. The function
  * 			pointer to free memory, mentioned above, may be replaced
- * 			by NULL as the argument. Using BST_POINT will implicitly
- * 			result in the BST having a shorter or equally long
- * 			lifetime as the data it holds.
+ * 			by NULL as the argument. Using BST_POINTED will
+ * 			implicitly result in the BST having a shorter or equally
+ * 			long lifetime as the data it holds.
  *
  * 	When passing heap-allocated data (which the called is responsible for
- * 	freeing) to `bst_new`, you should always use BST_COPY. When passing
+ * 	freeing) to `bst_new`, you should always use BST_COPIED. When passing
  * 	stack-allocated (automatically deallocated) data, it does not matter.
  *
  * @arg `elem_size`
@@ -69,8 +69,8 @@ typedef enum { BST_COPY, BST_POINT, } data_handling_t;
  * 	A pointer to a function that frees data of the type contained in the
  * 	node (i.e. the type of which pointers to are added as the `data`
  * 	argument of bst_add). Pass `NULL` if you do not want the tree to
- * 	free any data. Keep in mind though that if BST_COPY is passed as
- * 	`data_handling`, passing `NULL` as `data_free` will result in a memory
+ * 	free any data. Keep in mind though that if BST_COPIED is passed as
+ * 	`type`, passing `NULL` as `data_free` will result in a memory
  * 	leak.
  *
  * @arg `print`
@@ -83,11 +83,11 @@ typedef enum { BST_COPY, BST_POINT, } data_handling_t;
  * 	this struct; it is just handle that should be passed to the remaining
  * 	bst_? functions.
  */
-bst_t*	bst_new		(data_handling_t data_handling,
-			 size_t	elem_size,
-			 int	(*cmp)(const void*, const void*),
-			 void	(*data_free)(void*),
-			 void	(*print)(void*));
+bst_t*	bst_new		(bst_type_t	type,
+			 size_t		elem_size,
+			 int		(*cmp)(const void*, const void*),
+			 void		(*data_free)(void*),
+			 void		(*print)(void*));
 
 
 /*==============================================================================
@@ -104,8 +104,8 @@ void	bst_free	(bst_t* bst);
 
 
 /*==============================================================================
- * Add a pointer to some type of data to the BST. If BST_COPY was used when
- * creating the BST, new memory will be allocated. If BST_POINT was used, then
+ * Add a pointer to some type of data to the BST. If BST_COPIED was used when
+ * creating the BST, new memory will be allocated. If BST_POINTED was used, then
  * the data pointer inside each node will only be pointed to the data passed
  * to this function.
  *

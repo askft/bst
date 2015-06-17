@@ -80,7 +80,7 @@ typedef enum { BST_COPIED, BST_POINTED, } bst_type_t;
  *
  * @return
  * 	A pointer to a bst_t struct. The caller need not know anything about
- * 	this struct; it is just handle that should be passed to the remaining
+ * 	this struct; it is just a handle that should be passed to the remaining
  * 	bst_? functions.
  */
 bst_t*	bst_new		(bst_type_t	type,

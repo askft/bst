@@ -5,10 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO:
-// 	- Check heap allocations for `NULL` returns and handle it properly.
-// 	- Check all arguments for `NULL`.
+#define MALLOC_FAIL	"`malloc` failed.\n"
 
+#define ERROR(STATEMENT, ...)						    \
+do {									    \
+	fprintf(stderr, "Error in file \"%s\", line %d, function \"%s\":\n",\
+			__FILE__, __LINE__, __func__);			    \
+	fprintf(stderr, __VA_ARGS__);					    \
+	STATEMENT;							    \
+} while (0);
 
 struct bst_t {
 	node_t*		root;
@@ -52,10 +57,20 @@ static void	bst_print_recursive	(bst_t*, node_t*,
 bst_t* bst_new(	bst_type_t	type,
 		size_t		elem_size,
 		int		(*cmp)(const void*, const void*),
-		void		(*data_free)(void*),
-		void		(*print)(void*))
+		void		(*data_free)(void* data),
+		void		(*print)(void* data))
 {
 	bst_t* bst = malloc(sizeof *bst);
+
+	if (bst == NULL) {
+		ERROR(return NULL, MALLOC_FAIL);
+	}
+	if (type != BST_COPIED && type != BST_POINTED) {
+		ERROR(return NULL, "Invalid `type` argument.\n");
+	}
+	if (cmp == NULL) {
+		ERROR(return NULL, "`cmp` argument may not be NULL.\n");
+	}
 
 	bst->root	= NULL;
 	bst->size	= 0;
@@ -70,6 +85,9 @@ bst_t* bst_new(	bst_type_t	type,
 
 void bst_free(bst_t* bst)
 {
+	if (bst == NULL) {
+		ERROR(return, "`bst` argument is NULL: nothing to free.\n");
+	}
 	bst_free_recursive(bst, bst->root);
 	free(bst);
 }
@@ -86,6 +104,14 @@ static void bst_free_recursive(bst_t* bst, node_t* node)
 
 bool bst_add(bst_t* bst, void* data)
 {
+	if (bst == NULL) {
+		ERROR(return false,
+			"`bst` argument is NULL: nothing to add into.\n");
+	}
+	if (data == NULL) {
+		ERROR(return false,
+			"`data` argument is NULL: nothing to add.\n");
+	}
 	if (bst->root == NULL) {
 		bst->root = node_new(bst, data);
 		bst->size += 1;
@@ -130,6 +156,14 @@ static node_t* smallest_subnode(node_t* node)
 
 node_t* bst_delete(bst_t* bst, void* data)
 {
+	if (bst == NULL) {
+		ERROR(return NULL,
+			"`bst` argument is NULL: nothing to delete from.\n");
+	}
+	if (data == NULL) {
+		ERROR(return NULL,
+			"`data` argument is NULL: nothing to delete.\n");
+	}
 	return bst_delete_recursive(bst, bst->root, data);
 }
 
@@ -152,7 +186,13 @@ node_t* bst_delete_recursive(bst_t* bst, node_t* node, void* data)
 			return tmp;
 		}
 		node_t* tmp = smallest_subnode(node->right);
-		node->data = tmp->data; // TODO
+
+		if (bst->type == BST_POINTED) {
+			node->data = tmp->data;
+		} else if (bst->type == BST_COPIED) {
+			memcpy(node->data, tmp->data, bst->elem_size);
+		}
+
 		node->right = bst_delete_recursive(bst, node->right, tmp->data);
 	} else if (cmp_result < 0) {
 		node->left = bst_delete_recursive(bst, node->left, data);
@@ -164,9 +204,13 @@ node_t* bst_delete_recursive(bst_t* bst, node_t* node, void* data)
 
 bool bst_contains(bst_t* bst, void* data)
 {
-	if (bst == NULL || data == NULL) {
-		printf("Error in bst_contains: NULL argument(s).\n");
-		return false;
+	if (bst == NULL) {
+		ERROR(return false,
+			"`bst` argument is NULL: nothing to search.\n");
+	}
+	if (data == NULL) {
+		ERROR(return false,
+			"`data` argument is NULL: nothing to search for.\n");
 	}
 	return bst_contains_recursive(bst, bst->root, data);
 }
@@ -203,11 +247,17 @@ fail:	if (bst->print != NULL) {
 
 inline size_t bst_size(bst_t* bst)
 {
+	if (bst == NULL) {
+		ERROR(return 0, "`bst` argument is NULL.\n");
+	}
 	return bst->size;
 }
 
 size_t bst_height(bst_t* bst)
 {
+	if (bst == NULL) {
+		ERROR(return 0, "`bst` argument is NULL.\n");
+	}
 	return bst_height_recursive(bst, bst->root);
 }
 
@@ -241,6 +291,16 @@ void bst_execute(bst_t*			bst,
 		 void			(*execute)(void* data),
 		 traversal_order_t	order)
 {
+	if (bst == NULL) {
+		ERROR(return, "`bst` argument is NULL.\n");
+	}
+	if (execute == NULL) {
+		ERROR(return,	"`execute` argument is NULL: no function to "
+				"execute.\n");
+	}
+	if (order != ORDER_PRE && order != ORDER_IN && order != ORDER_POST) {
+		ERROR(return, "Invalid `order` argument.\n");
+	}
 	switch (order) {
 	case ORDER_PRE:	 BST_EXECUTE(preorder)	(bst, bst->root, execute);break;
 	case ORDER_IN:	 BST_EXECUTE(inorder)	(bst, bst->root, execute);break;
@@ -346,9 +406,12 @@ static node_t* bst_build_tree(bst_t* bst, void* arr[], int first, int last)
 
 void bst_print(bst_t* bst, void (*print)(void* data))
 {
+	if (bst == NULL) {
+		ERROR(return, "`bst` argument is NULL: nothing to print.\n");
+	}
 	if (print == NULL) {
-		printf("<No print function supplied.>");
-		return;
+		ERROR(return,	"`print` argument is NULL: "
+				"can not print values.\n");
 	}
 	printf("Printing the BST:\n");
 	bst_print_recursive(bst, bst->root, print, 0);
@@ -384,12 +447,19 @@ bst_print_recursive(bst_t*	bst,
 static node_t* node_new(bst_t* bst, void* data)
 {
 	node_t*	node = malloc(sizeof *node);
+	
+	if (node == NULL) {
+		ERROR(return NULL, MALLOC_FAIL);
+	}
 
 	switch (bst->type) {
 
 	/* The BST makes a private copy of the data. */
 	case BST_COPIED:
 		node->data = malloc(bst->elem_size);
+		if (node->data == NULL) {
+			ERROR(return NULL, MALLOC_FAIL);
+		}
 		memcpy(node->data, data, bst->elem_size);
 		break;
 
@@ -410,6 +480,17 @@ static node_t* node_new(bst_t* bst, void* data)
 	return node;
 }
 
+static void node_free(bst_t* bst, node_t* node)
+{
+	if (node != NULL) {
+		if (bst->data_free != NULL) {
+			bst->data_free(node->data);
+		}
+		free(node);
+	}
+}
+
+#if 0
 void node_free(bst_t* bst, node_t* node)
 {
 	if (node != NULL) {
@@ -430,19 +511,7 @@ void node_free(bst_t* bst, node_t* node)
 		}
 	}
 }
-
-#if 0
-void node_free(node_t* node, void (*data_free)(void*))
-{
-	if (node != NULL) {
-		if (data_free != NULL) {
-			data_free(node->data);
-		}
-		free(node);
-	}
-}
 #endif
-
 
 //
 // TODO (Possible implementation):

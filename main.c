@@ -35,7 +35,10 @@ void test_int()
 	bst_t*	bst;
 	int	arr[10];
 
-	bst = bst_new(BST_POINTED, sizeof(int), int_cmp, NULL, int_print);
+	bst = bst_new(BST_COPIED, sizeof(int), int_cmp, free, int_print);
+	if (bst == NULL) {
+		exit(EXIT_FAILURE);
+	}
 
 	for (int i = 0; i < 10; ++i) {
 		arr[i] = i + 1;
@@ -51,23 +54,7 @@ void test_int()
 	printf		("Balanced the tree!\n\n");
 
 	bst_print	(bst, int_print);
-
-	int a = 5;
-	int b = 20;
-
-	bst_contains	(bst, &a);
-	bst_contains	(bst, &b);
-
-	bst_delete	(bst, &a);
-	bst_contains	(bst, &a);
-	bst_print	(bst, int_print);
-
-	bst_delete	(bst, &arr[9]);
-	bst_contains	(bst, &arr[9]);
-	bst_print	(bst, int_print);
-
-	bst_delete	(bst, &arr[2]);
-	bst_contains	(bst, &arr[2]);
+	bst_delete	(bst, &arr[5 - 1]);
 	bst_print	(bst, int_print);
 
 	bst_free	(bst);

@@ -49,7 +49,7 @@ typedef enum { BST_COPIED, BST_POINTED, } bst_type_t;
  * 			implicitly result in the BST having a shorter or equally
  * 			long lifetime as the data it holds.
  *
- * 	When passing heap-allocated data (which the called is responsible for
+ * 	When passing heap-allocated data (which the caller is responsible for
  * 	freeing) to `bst_new`, you should always use BST_COPIED. When passing
  * 	stack-allocated (automatically deallocated) data, it does not matter.
  *

@@ -109,7 +109,7 @@ void	bst_free	(bst_t* bst);
  * the data pointer inside each node will only be pointed to the data passed
  * to this function.
  *
- * * First, the function checks whether or not `data` is contained in the BST.
+ * First, the function checks whether or not `data` is contained in the BST.
  * This test is done by the compare function passed to the BST as it was created
  * (with bst_new). If `data` already exists in the BST, nothing happens.
  * Otherwise a new node is created in `bst`.

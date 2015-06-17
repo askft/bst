@@ -31,9 +31,6 @@ struct node_t {
 	node_t*	right;
 };
 
-static node_t*	node_new (bst_t*, void* data);
-static void	node_free (bst_t*, node_t*);
-
 static void	bst_free_recursive	(bst_t*, node_t*);
 static bool	bst_add_recursive	(bst_t*, node_t*, void* data);
 node_t*		bst_delete_recursive	(bst_t*, node_t*, void* data);
@@ -48,6 +45,9 @@ static node_t*	bst_build_tree		(bst_t*, void* arr[],
 
 static void	bst_print_recursive	(bst_t*, node_t*,
 					 void (*print)(void*), int);
+
+static node_t*	node_new		(bst_t*, void* data);
+static void	node_free		(bst_t*, node_t*);
 
 
 /*==============================================================================
@@ -490,6 +490,12 @@ static void node_free(bst_t* bst, node_t* node)
 	}
 }
 
+
+
+// TODO:
+// 	This can probably be removed. I don't know where I got the idea to use
+// 	it, but it caused lots of memory leaks when I did. I'll keep it around
+// 	until I'm certain that the current `node_free` function actually works.
 #if 0
 void node_free(bst_t* bst, node_t* node)
 {

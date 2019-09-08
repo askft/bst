@@ -1,0 +1,83 @@
+
+typedef struct nfl_t nfl_t;
+
+struct nfl_t {
+	node_t* node;
+	nfl_t*	next;
+};
+
+static nfl_t*	node_free_list_new ();
+static void	node_free_list_add (nfl_t* nfl, node_t* node);
+static void	node_free_list_free (nfl_t* nfl);
+
+void nfl_print(nfl_t* nfl)
+{
+	if (nfl == NULL) {
+		printf("ERROE\n");
+	}
+
+	if (nfl->node == NULL) {
+		printf("nfl->node = NULL\n");
+	}
+
+	if (nfl->node->data == NULL) {
+		printf("nfl->node->data = NULL\n");
+	}
+
+	while (nfl != NULL) {
+		printf("[%d] ", *((int*)nfl->node->data));
+		nfl = nfl->next;
+	}
+}
+
+
+/*==============================================================================
+	NODE_FREE_LIST
+==============================================================================*/
+
+static nfl_t* node_free_list_new()
+{
+	nfl_t* nfl = malloc(sizeof *nfl);
+
+	nfl->node = NULL;
+	nfl->next = NULL;
+
+	return nfl;
+}
+
+static void node_free_list_add(nfl_t* nfl, node_t* node)
+{
+	if (nfl == NULL || node == NULL) {
+		fprintf(stderr, "[!] Input is null.\n");
+		return;
+	}
+
+	while (nfl != NULL) {
+		nfl = nfl->next;
+	}
+
+	printf("Adding %d to free_list.\n", *((int*)node->data));
+
+	nfl->next = node_free_list_new();
+	nfl->next->node = node;
+}
+
+static void node_free_list_free(nfl_t* nfl)
+{
+	nfl_t*	tmp;
+
+	do {
+		tmp = nfl->next;	printf("Freeing... ");
+		free(nfl);		printf("success!\n");
+		nfl = tmp;
+	} while (nfl != NULL);
+
+#if 0
+	while (nfl != NULL) {
+		tmp = nfl->next;	printf("Freeing... ");
+		node_free(nfl->node);	printf("success!\n");
+		nfl = tmp;
+	}
+#endif
+}
+
